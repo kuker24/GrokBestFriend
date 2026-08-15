@@ -1,0 +1,26 @@
+# Local packs and downloads
+*.tgz
+*.tar.gz
+*.zip
+design-bank/
+.grok-install-tmp/
+vendor/.cache/
+
+# Secrets and machine state
+auth.json
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Test scratch
+/tmp-gbf-*
