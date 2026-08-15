@@ -27,7 +27,6 @@ Optional later:
 ```bash
 grok mcp enable exa       # after Exa OAuth
 grok mcp enable serena    # only for exact symbol work
-./scripts/restore-design-bank.sh /path/to/Design-bank.tgz
 ```
 
 Doctor:
@@ -48,6 +47,7 @@ Doctor:
 | MCP | `codebase-memory-mcp` and `context7` on; `serena` and `exa` registered but off |
 | Tools | `serena`, `browser-act`, `semgrep`, `osv-scanner`, `gitleaks`, `grok-chromium-cdp` |
 | Plugins | none (matches the source machine) |
+| Design bank | Refero + Motionsites restored to `~/Design` (or kept if already present) |
 
 Bundled Grok skills (`/implement`, `/review`, `/imagine`, …) come from the Grok binary, not this repo.
 
@@ -57,21 +57,11 @@ Bundled Grok skills (`/implement`, `/review`, `/imagine`, …) come from the Gro
 - Session history, logs, caches
 - Trusted-folder list
 - Custom gateway URLs or model-mapping tables
-- The 462MB Refero / Motionsites design bank (pack it separately)
-
 See [docs/secrets-policy.md](docs/secrets-policy.md) and [docs/new-laptop.md](docs/new-laptop.md).
 
 ## Design bank
 
-`/found-this-design` needs a local bank at `$GROK_DESIGN_BANK` or `~/Design`.
-
-On the old machine:
-
-```bash
-GROK_DESIGN_BANK="$HOME/Downloads/LAB GITHUB/Design" ./scripts/pack-design-bank.sh
-```
-
-Copy `Design-bank.tgz` by USB, then restore on the new laptop.
+`./install.sh` downloads the packed Refero + Motionsites bank from the GitHub Release and restores it to `~/Design`. The archive is not stored in git (about 412MB compressed). Skip with `--skip-design-bank`. See [docs/design-bank.md](docs/design-bank.md).
 
 ## Refresh this snapshot
 

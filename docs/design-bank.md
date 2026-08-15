@@ -10,24 +10,22 @@ Root directory:
 1. `$GROK_DESIGN_BANK` if set
 2. otherwise `~/Design`
 
-The source machine keeps the bank outside this repo (~462MB). Do not commit it.
+`./install.sh` restores the packed bank automatically. It downloads `Design-bank.tgz` from the `v1.0.0` GitHub Release (checksum in `vendor/sources.json`) unless a local archive is already present, then unpacks to `~/Design` and exports `GROK_DESIGN_BANK`.
 
-## Pack on the old laptop
+Skip with `./install.sh --skip-design-bank`.
+
+## Pack again on the source machine
 
 ```bash
 GROK_DESIGN_BANK="$HOME/Downloads/LAB GITHUB/Design" \
-  ./scripts/pack-design-bank.sh "$GROK_DESIGN_BANK" ./Design-bank.tgz
+  ./scripts/pack-design-bank.sh "$GROK_DESIGN_BANK" /tmp/gbf-design/Design-bank.tgz
 ```
 
-Copy `Design-bank.tgz` with USB or another private channel.
+Then upload the new archive to the GitHub Release and update the SHA-256 in `vendor/sources.json`.
 
-## Restore on the new laptop
+## Manual restore
 
 ```bash
-./scripts/restore-design-bank.sh ./Design-bank.tgz
+./scripts/restore-design-bank.sh /path/to/Design-bank.tgz
 export GROK_DESIGN_BANK="$HOME/Design"
 ```
-
-Add the export to your shell rc if you want it permanent.
-
-Without the bank, every other GrokBestFriend surface still works. Only `/found-this-design` exits until the catalogs exist.

@@ -13,5 +13,6 @@ DEST="${2:-./Design-bank.tgz}"
 
 mkdir -p -- "$(dirname -- "$DEST")"
 tar -czf "$DEST" -C "$(dirname -- "$SRC")" "$(basename -- "$SRC")"
+sha256sum -- "$DEST" | tee "$DEST.sha256"
 echo "packed $SRC -> $DEST"
-echo "Copy that file to the new laptop, then: ./scripts/restore-design-bank.sh $DEST"
+echo "Upload $DEST to the GitHub Release, then put the SHA-256 in vendor/sources.json"

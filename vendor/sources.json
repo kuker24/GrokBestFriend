@@ -45,6 +45,12 @@
     },
     "uv": {
       "installUrl": "https://astral.sh/uv/install.sh"
+    },
+    "design-bank": {
+      "version": "1.0.0",
+      "artifactUrl": "https://github.com/kuker24/GrokBestFriend/releases/download/v1.0.0/Design-bank.tgz",
+      "artifactSha256": "9866f5a82f57f84c45f4f82af8092f9bd3a6838b5c12d6b097e3eb4fda5b634c",
+      "dest": "~/Design"
     }
   }
 }

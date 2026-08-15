@@ -53,7 +53,7 @@ Expected MCP: `codebase-memory-mcp` and `context7` enabled; `serena` and `exa` d
 
 | Need | Action |
 | --- | --- |
-| Design matching (`/found-this-design`) | Restore the bank, set `GROK_DESIGN_BANK` |
+| Design matching (`/found-this-design`) | Included by `./install.sh` (bank → `~/Design`) |
 | Exa search | Finish Exa OAuth, then `grok mcp enable exa` |
 | Exact symbol MCP | `grok mcp enable serena` only when Codebase Memory is not enough |
 

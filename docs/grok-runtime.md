@@ -44,4 +44,4 @@ Skills are vendored from the live `~/.grok/skills/` tree. Versions of downloadab
 
 ## Secrets
 
-This installer never writes login credentials, tokens, gateway URLs, or model mappings.
+This installer never writes login credentials, tokens, gateway URLs, or model mappings. The design bank is downloaded from the public GitHub Release and checksummed.

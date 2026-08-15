@@ -136,6 +136,6 @@ grt_run_install() {
   grt_merge_user_config
   grt_install_tools
   grt_install_mcp
+  grt_install_design_bank
   grt_write_manifest
-  grt_hint_design_bank
 }

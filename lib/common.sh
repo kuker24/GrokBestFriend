@@ -12,6 +12,7 @@ GRT_VENDOR="$GRT_ROOT/vendor"
 GRT_CODEBASE_MEMORY_BIN="${GRT_CODEBASE_MEMORY_BIN:-$GRT_HOME/runtime/components/codebase-memory/bin/codebase-memory-mcp}"
 GRT_DRY_RUN="${GRT_DRY_RUN:-0}"
 GRT_SKIP_TOOLS="${GRT_SKIP_TOOLS:-0}"
+GRT_SKIP_DESIGN_BANK="${GRT_SKIP_DESIGN_BANK:-0}"
 GRT_GROK="${GRT_GROK:-}"
 GRT_PATH_MARKER="# GrokBestFriend PATH"
 

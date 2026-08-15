@@ -36,6 +36,11 @@ grt_doctor() {
   check "gitleaks" grt_have gitleaks
   check "chromium helper" test -x "$GRT_HOME/bin/grok-chromium-cdp"
   check "chromium binary" "$GRT_HOME/bin/grok-chromium-cdp" resolve
+  if [[ "$GRT_SKIP_DESIGN_BANK" == 1 ]]; then
+    grt_info "SKIP design bank"
+  else
+    check "design bank catalogs" grt_find_design_bank
+  fi
 
   local skill
   for skill in adhd ask-matt browser-act chrome-devtools-axi emil-design-eng found-this-design full-audit-keamanan full-performance-audit gh-axi grill-with-docs impeccable matt-code-review matt-implement scroll-world tdd to-spec to-tickets visual-studio; do

@@ -42,4 +42,4 @@ Captured from the source Linux host. See `vendor/inventory.json` for the machine
 
 ## Not in this repo
 
-Sessions, logs, marketplace cache, trusted folders, login files, Claude Code, the 462MB design bank.
+Sessions, logs, marketplace cache, trusted folders, login files, Claude Code. The design bank archive is a GitHub Release asset, not a git blob.
