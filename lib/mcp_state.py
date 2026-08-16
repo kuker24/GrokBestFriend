@@ -144,7 +144,9 @@ def evaluate(
         want_command = spec.get("command")
         if want_command and want_command != "codebase-memory-bin":
             got_command = item.get("command") or item.get("target")
-            if got_command:
+            if not got_command:
+                report.fail("MCP_COMMAND_MISSING", f"{name} command is missing")
+            else:
                 got_name = Path(str(got_command)).name
                 if got_name != want_command and str(got_command) != want_command:
                     report.fail("MCP_COMMAND", f"{name} command must be {want_command}")

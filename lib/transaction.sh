@@ -50,6 +50,7 @@ PY
   for name in "${GRT_SKILLS_VENDOR[@]}"; do
     [[ -d "$GRT_VENDOR/skills/$name" ]] || grt_die "Missing vendor skill: $name"
   done
+  grt_require_node
 }
 
 grt_lock_begin() {

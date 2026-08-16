@@ -57,7 +57,10 @@
       "package": "shadcn",
       "version": "4.18.0",
       "via": "npx",
-      "note": "Pinned CLI version for MCP stdio. npx downloads the package; there is no artifactSha256."
+      "engines": {
+        "node": ">=20.18.1"
+      },
+      "note": "Pinned CLI version for MCP stdio. npx downloads the package; there is no artifactSha256. engines.node matches the npm package."
     },
     "design-bank": {
       "version": "1.0.0",

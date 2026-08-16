@@ -70,6 +70,17 @@ if "MCP `shadcn`" not in routing or "Never init this GrokBestFriend repo" not in
     failed = True
 else:
     print("OK  vendor 00-routing.md has shadcn UI hub rules")
+if "file targets" not in routing or "unused registries" not in routing:
+    print("ERROR: FAIL vendor 00-routing.md missing inspect-before-install / components.json rules")
+    failed = True
+else:
+    print("OK  vendor 00-routing.md inspects file targets and registry writes")
+hub = (root / "vendor/skills/impeccable/reference/ui-hub.md").read_text(encoding="utf-8")
+if "file targets" not in hub or "unused registries" not in hub:
+    print("ERROR: FAIL vendor ui-hub.md missing inspect-before-install / components.json rules")
+    failed = True
+else:
+    print("OK  vendor ui-hub.md inspects file targets and registry writes")
 if "21st.dev" in routing and "Do not register 21st.dev" not in routing:
     print("ERROR: FAIL vendor 00-routing.md enables 21st.dev")
     failed = True

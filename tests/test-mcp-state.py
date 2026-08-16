@@ -92,6 +92,15 @@ def main() -> int:
     check(pinned.failed, "unpinned shadcn args fail")
     check("MCP_ARGS" in codes(pinned, "FAIL"), "unpinned shadcn emits MCP_ARGS")
 
+    no_command = evaluate(
+        policy=policy,
+        servers=parse_list_payload(load("list-shadcn-missing-command.json")),
+        memory_bin=MEMORY,
+        serena_bin=SERENA,
+    )
+    check(no_command.failed, "missing shadcn command fails")
+    check("MCP_COMMAND_MISSING" in codes(no_command, "FAIL"), "missing shadcn command emits MCP_COMMAND_MISSING")
+
     missing = evaluate(
         policy=policy,
         servers=parse_list_payload(load("list-missing.json")),

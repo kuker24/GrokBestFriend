@@ -57,6 +57,12 @@ if re.search(r"mcp add.*\|\|\s*true", mcp) or re.search(r"mcp disable.*\|\|\s*tr
     error("mcp.sh still swallows add/disable errors")
 else:
     ok("mcp.sh has no || true on add/disable")
+if "mcp_config.py" not in mcp:
+    error("mcp.sh does not call mcp_config.py")
+elif "(?:(?!^\\[).)*" in mcp or "startup_timeout_sec" in mcp:
+    error("mcp.sh still embeds the shadcn timeout rewrite")
+else:
+    ok("mcp.sh delegates MCP rewrite to mcp_config.py")
 
 tx = (root / "lib/transaction.sh").read_text(encoding="utf-8")
 if "old-skill" in tx or "always delete" in tx.lower():
@@ -92,6 +98,7 @@ shadcn = (sources.get("sources") or {}).get("shadcn") or {}
 pin = shadcn.get("version")
 policy = json.loads((root / "vendor/mcp-policy.json").read_text(encoding="utf-8"))
 shadcn_args = ((policy.get("servers") or {}).get("shadcn") or {}).get("args") or []
+node_engine = (shadcn.get("engines") or {}).get("node")
 if not pin:
     error("sources.shadcn.version missing")
 elif f"shadcn@{pin}" not in shadcn_args:
@@ -100,6 +107,18 @@ elif "@latest" in " ".join(str(a) for a in shadcn_args):
     error("mcp-policy shadcn args still use @latest")
 else:
     ok(f"shadcn MCP pin matches sources ({pin})")
+if node_engine != ">=20.18.1":
+    error(f"sources.shadcn.engines.node must be >=20.18.1, got {node_engine!r}")
+else:
+    ok("shadcn engines.node is >=20.18.1")
+tx = (root / "lib/transaction.sh").read_text(encoding="utf-8")
+common = (root / "lib/common.sh").read_text(encoding="utf-8")
+if "grt_require_node" not in tx:
+    error("transaction preflight does not call grt_require_node")
+elif "grt_check_node" not in common:
+    error("common.sh is missing grt_check_node")
+else:
+    ok("preflight requires Node before backup")
 
 raise SystemExit(1 if failed else 0)
 PY

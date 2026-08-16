@@ -52,6 +52,7 @@
     "osv-scanner": "2.4.0",
     "gitleaks": "8.30.1",
     "gh": "required",
+    "node": ">=20.18.1",
     "chromium": "required-not-chrome"
   },
   "compat": {

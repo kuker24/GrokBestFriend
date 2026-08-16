@@ -37,7 +37,9 @@ Follow this tree here. Do not load `/ask-matt` unless the user is choosing a wor
 - Visual UI once a world is chosen or the brief is already visual: `/impeccable` first.
 - Installable UI components (form, table, chart, icon, hero, marquee, gantt, animated primitive): MCP `shadcn` only. Load Impeccable `reference/ui-hub.md`. Search → inspect 1–3 candidates → pick one → install. Do not add Magic UI, Kibo, 21st.dev, or community UI MCP servers.
 - Decorative components only when they clarify hierarchy, interaction, brand, or data. One authored landing moment. Dashboards may be denser (charts, table, KPI, status) but stay in one system.
-- Use the hub only when cwd has `components.json`. React + Tailwind without init: offer `npx shadcn@<pinned> init`, never silent. Never init this GrokBestFriend repo, a backend or Python tree, or a non-UI cwd. Third-party registry files stay out of `components/ui`.
+- Use the hub only when cwd has `components.json`. React + Tailwind without init: offer `npx shadcn@<pinned> init`, never silent. Never init this GrokBestFriend repo, a backend or Python tree, or a non-UI cwd.
+- Before install: inspect registry namespace, dependencies, file targets, and files that already exist. If a candidate would overwrite an existing project file, reject it or require explicit approval. Do not assume third-party items belong in `components/ui`.
+- Registry search/discovery may write the registry into `components.json`. Inspect the git diff after discovery and do not accumulate unused registries.
 - Scroll-scrub fly-through, diorama, or 3D-world landing: `/scroll-world` (it loads bundled `imagine`). Impeccable owns surrounding chrome when the world sits inside an existing site.
 - Website or app UI that also needs designed photos/videos: `/impeccable` owns the surface; load `/visual-studio` for those assets (it loads bundled `imagine`).
 - Photoreal product stills, UGC/ad video, cinematic VFX, identity packs, thumbnails with no UI surface: `/visual-studio` only.
@@ -84,6 +86,7 @@ Follow this tree here. Do not load `/ask-matt` unless the user is choosing a wor
 - Do not enable every specialist in one turn.
 - Do not register 21st.dev, Magic UI MCP, Kibo MCP, or unofficial React Bits / Aceternity MCP.
 - Do not run `shadcn init` on GrokBestFriend, backend, or Python repositories.
+- Do not install a hub candidate that overwrites an existing project file without explicit approval.
 - Do not use Serena before Codebase Memory.
 - Do not use ADHD for ordinary work.
 - Do not use Emil for static UI, or Impeccable for motion-only work.
