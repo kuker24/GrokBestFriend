@@ -11,8 +11,14 @@
       "transport": "http",
       "target": "https://mcp.context7.com/mcp",
       "healthy": true
+    },
+    {
+      "name": "shadcn",
+      "transport": "stdio",
+      "target": "npx",
+      "healthy": true
     }
   ],
-  "healthy_count": 1,
+  "healthy_count": 2,
   "failing_count": 1
 }

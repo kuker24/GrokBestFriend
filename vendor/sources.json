@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "generatedAt": "2026-08-16",
-  "snapshot": "GrokBestFriend 1.1.1",
+  "snapshot": "GrokBestFriend 1.2.0",
   "compatibility": {
-    "product": "1.1.1",
+    "product": "1.2.0",
     "grok": "1.0.4",
     "note": "Grok CLI and uv still install from official mutable scripts. The installer verifies the resulting binary version, not the script checksum."
   },
@@ -51,6 +51,13 @@
     "uv": {
       "installUrl": "https://astral.sh/uv/install.sh",
       "version": "0.11.29"
+    },
+    "shadcn": {
+      "repository": "https://github.com/shadcn-ui/ui",
+      "package": "shadcn",
+      "version": "4.18.0",
+      "via": "npx",
+      "note": "Pinned CLI version for MCP stdio. npx downloads the package; there is no artifactSha256."
     },
     "design-bank": {
       "version": "1.0.0",

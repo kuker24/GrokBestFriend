@@ -83,6 +83,15 @@ def main() -> int:
     check(wrong.failed, "wrong context7 url fails")
     check("MCP_URL" in codes(wrong, "FAIL"), "wrong url emits MCP_URL")
 
+    pinned = evaluate(
+        policy=policy,
+        servers=parse_list_payload(load("list-shadcn-wrong-args.json")),
+        memory_bin=MEMORY,
+        serena_bin=SERENA,
+    )
+    check(pinned.failed, "unpinned shadcn args fail")
+    check("MCP_ARGS" in codes(pinned, "FAIL"), "unpinned shadcn emits MCP_ARGS")
+
     missing = evaluate(
         policy=policy,
         servers=parse_list_payload(load("list-missing.json")),

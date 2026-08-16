@@ -47,7 +47,7 @@ grok mcp list
 grok plugin list
 ```
 
-Expected MCP: `codebase-memory-mcp` and `context7` enabled **and healthy**; `serena` and `exa` registered but disabled. Plugin list empty. Doctor fails if a required server is missing, disabled, on the wrong URL/command, or unhealthy.
+Expected MCP: `codebase-memory-mcp`, `context7`, and `shadcn` enabled **and healthy**; `serena` and `exa` registered but disabled. Plugin list empty. Doctor fails if a required server is missing, disabled, on the wrong URL/command, or unhealthy. `shadcn` is the pinned CLI (`npx -y shadcn@<version in vendor/sources.json> mcp`). Need Node.js/`npx` on PATH.
 
 If install fails after the swap, or the process dies mid-transaction, the installer restores **managed** surfaces (skills/rules/hooks/config/helper/manifest, plus rc snippets it added). It does **not** uninstall a Grok CLI or `uv` that this run installed. Manual rollback: `./restore.sh`. Leftover `SWAPPED` state: `./install.sh --recover`.
 
@@ -58,6 +58,7 @@ Foreign skills, rules, and hooks stay in place. An unowned `~/.grok/skills/imple
 | Need | Action |
 | --- | --- |
 | Design matching (`/found-this-design`) | Included by `./install.sh` (bank → `~/Design`) |
+| UI registry hub (`shadcn`) | Included by `./install.sh`. Use only in a React project with `components.json` |
 | Exa search | Finish Exa OAuth, then `grok mcp enable exa` |
 | Exact symbol MCP | `grok mcp enable serena` only when Codebase Memory is not enough |
 

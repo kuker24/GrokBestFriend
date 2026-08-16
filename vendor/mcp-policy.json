@@ -11,6 +11,12 @@
       "transport": "http",
       "url": "https://mcp.context7.com/mcp"
     },
+    "shadcn": {
+      "enabled": true,
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "shadcn@4.18.0", "mcp"]
+    },
     "exa": {
       "enabled": false,
       "transport": "http",

@@ -1,6 +1,6 @@
 # Live inventory (2026-08-16)
 
-Product identity: **GrokBestFriend 1.1.1**. Captured from the source Linux host. See `vendor/inventory.json` for the machine-readable copy. Install preserves foreign skills/rules/hooks, journals a crash-safe transaction, and enforces `vendor/runtime-policy.json` (`yolo=false`, `permission_mode=ask`, compat off).
+Product identity: **GrokBestFriend 1.2.0**. Captured from the source Linux host. See `vendor/inventory.json` for the machine-readable copy. Install preserves foreign skills/rules/hooks, journals a crash-safe transaction, and enforces `vendor/runtime-policy.json` (`yolo=false`, `permission_mode=ask`, compat off). v1.2.0 adds the pinned shadcn MCP as the UI registry hub.
 
 Planning skills `ask-matt` `grill-with-docs` `to-spec` `to-tickets` are model-invocable. Bundled `/implement` stays slash-only. Routing allows one primary specialist plus at most one verification specialist when a risk or measured-performance trigger is on.
 
@@ -27,6 +27,7 @@ Planning skills `ask-matt` `grill-with-docs` `to-spec` `to-tickets` are model-in
 | --- | --- | --- |
 | codebase-memory-mcp | yes | stdio, portable binary v0.9.0 |
 | context7 | yes | HTTP `https://mcp.context7.com/mcp` |
+| shadcn | yes | stdio, `npx -y shadcn@4.18.0 mcp` |
 | exa | no | HTTP `https://mcp.exa.ai/mcp` |
 | serena | no | stdio, `serena-agent` 1.6.1, context `agent` |
 
