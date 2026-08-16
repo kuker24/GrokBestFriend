@@ -18,6 +18,23 @@ grt_find_design_bank() {
   return 1
 }
 
+grt_design_bank_action() {
+  local dest="$1"
+  if grt_design_bank_ok "$dest"; then
+    printf '%s\n' reuse
+    return 0
+  fi
+  if [[ ! -e "$dest" ]]; then
+    printf '%s\n' create
+    return 0
+  fi
+  if [[ -d "$dest" && -z "$(find "$dest" -mindepth 1 -maxdepth 1 | head -n 1)" ]]; then
+    printf '%s\n' create
+    return 0
+  fi
+  printf '%s\n' fail
+}
+
 grt_persist_design_bank_env() {
   local root="$1"
   export GROK_DESIGN_BANK="$root"
@@ -31,6 +48,7 @@ grt_persist_design_bank_env() {
     rc="$HOME/.bashrc"
   fi
   [[ -n "$rc" ]] || return 0
+  GRT_RC_PATH="$rc"
 
   if grep -Fq 'export GROK_DESIGN_BANK=' "$rc"; then
     return 0
@@ -43,6 +61,7 @@ grt_persist_design_bank_env() {
     printf '\n# GrokBestFriend design bank\n'
     printf 'export GROK_DESIGN_BANK="%s"\n' "$root"
   } >>"$rc"
+  GRT_CREATED_DESIGN_BANK_EXPORT=1
   grt_info "Appended GROK_DESIGN_BANK to $rc"
 }
 
@@ -68,6 +87,17 @@ grt_install_design_bank() {
   fi
 
   dest="${GROK_DESIGN_BANK:-$HOME/Design}"
+  case "$(grt_design_bank_action "$dest")" in
+    reuse)
+      grt_info "design bank already present at $dest"
+      grt_persist_design_bank_env "$dest"
+      return 0
+      ;;
+    fail)
+      grt_die "design bank dest exists but is not a valid catalog tree: $dest (refusing to mix files)"
+      ;;
+  esac
+
   archive=""
   while IFS= read -r candidate; do
     [[ -n "$candidate" && -f "$candidate" ]] || continue
@@ -100,7 +130,20 @@ grt_install_design_bank() {
     [[ "$actual" == "$expected" ]] || grt_die "design bank checksum mismatch for $archive"
   fi
 
-  "$GRT_ROOT/scripts/restore-design-bank.sh" "$archive"
+  if [[ -d "$dest" && -z "$(find "$dest" -mindepth 1 -maxdepth 1 | head -n 1)" ]]; then
+    rmdir -- "$dest"
+  fi
+  tmp="$(mktemp -d "${dest}.tmp.XXXXXX")"
+  if ! GROK_DESIGN_BANK="$tmp" "$GRT_ROOT/scripts/restore-design-bank.sh" "$archive"; then
+    rm -rf -- "$tmp"
+    grt_die "design bank extract failed"
+  fi
+  if ! grt_design_bank_ok "$tmp"; then
+    rm -rf -- "$tmp"
+    grt_die "design bank extract did not produce catalogs"
+  fi
+  mv -- "$tmp" "$dest"
+  GRT_CREATED_DESIGN_BANK=1
   grt_design_bank_ok "$dest" || dest="$(grt_find_design_bank)" || grt_die "design bank restore failed"
   grt_persist_design_bank_env "$dest"
 }

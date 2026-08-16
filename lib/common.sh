@@ -15,6 +15,8 @@ GRT_SKIP_TOOLS="${GRT_SKIP_TOOLS:-0}"
 GRT_SKIP_DESIGN_BANK="${GRT_SKIP_DESIGN_BANK:-0}"
 GRT_GROK="${GRT_GROK:-}"
 GRT_PATH_MARKER="# GrokBestFriend PATH"
+GRT_RC_PATH="${GRT_RC_PATH:-}"
+GRT_DOCTOR_STRICT="${GRT_DOCTOR_STRICT:-0}"
 
 grt_info() { printf '%s\n' "$*"; }
 grt_warn() { printf 'WARNING: %s\n' "$*" >&2; }

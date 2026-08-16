@@ -28,11 +28,20 @@ if [[ "${1:-}" == "--list" ]]; then
     grt_info "no backups"
     exit 0
   fi
-  ls -1 "$root" | grep -E '^[0-9]{8}T[0-9]{6}Z$' || true
+  shopt -s nullglob
+  for entry in "$root"/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z*; do
+    [[ -d "$entry" ]] || continue
+    basename -- "$entry"
+  done
+  shopt -u nullglob
   if [[ -f "$root/LATEST" ]]; then
     grt_info "LATEST=$(cat "$root/LATEST")"
   fi
   exit 0
 fi
 
+grt_lock_begin
+trap 'grt_lock_end' EXIT
+GRT_TX_RECOVER=1
+grt_tx_check_stale
 grt_restore_backup "${1:-}"

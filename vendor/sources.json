@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "generatedAt": "2026-08-16",
-  "snapshot": "GrokBestFriend 1.1.0",
+  "snapshot": "GrokBestFriend 1.1.1",
   "compatibility": {
-    "product": "1.1.0",
+    "product": "1.1.1",
     "grok": "1.0.4",
     "note": "Grok CLI and uv still install from official mutable scripts. The installer verifies the resulting binary version, not the script checksum."
   },

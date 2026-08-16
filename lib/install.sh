@@ -45,18 +45,25 @@ PY
 
 grt_run_install() {
   grt_preflight
+  grt_lock_begin
+  grt_tx_check_stale
+  grt_tx_set_state PREPARING
+  grt_backup_owned
+  grt_tx_set_state BACKED_UP
+  grt_tx_set_state MUTATING
   grt_install_grok_cli
   grt_ensure_path
+  grt_tx_update_created
   grt_find_grok
   grt_require_grok_version
   grt_install_tools
   grt_install_mcp
-  grt_backup_owned
   grt_stage_owned
   grt_validate_stage
   grt_atomic_swap
   grt_merge_user_config
   grt_install_design_bank
+  grt_tx_update_created
   grt_ensure_learning_log
   grt_write_manifest
 }

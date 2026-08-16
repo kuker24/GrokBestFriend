@@ -27,9 +27,25 @@ fi
 grep -q 'personal-experiment' /tmp/gbf-snap.err
 echo "OK  extra live skill is refused"
 
-rm -rf "$live/skills/personal-experiment"
-GROK_HOME="$live" SNAPSHOT_VENDOR="$dest" "$ROOT/scripts/snapshot-live.sh" >/tmp/gbf-snap.out
+if GROK_HOME="$live" SNAPSHOT_VENDOR="$dest" "$ROOT/scripts/snapshot-live.sh" --allow-extra personal-experiment >/tmp/gbf-snap.out 2>/tmp/gbf-snap.err; then
+  echo "FAIL --allow-extra is still accepted" >&2
+  exit 1
+fi
+echo "OK  --allow-extra is rejected"
+
+rm -rf "$dest"
+GROK_HOME="$live" SNAPSHOT_VENDOR="$dest" "$ROOT/scripts/snapshot-live.sh" --ignore-extra personal-experiment >/tmp/gbf-snap.out
 [[ -f "$dest/skills/impeccable/SKILL.md" ]]
 [[ ! -d "$dest/skills/personal-experiment" ]]
-echo "OK  allowlisted snapshot writes only official skills"
+echo "OK  --ignore-extra skips extras and does not copy them"
+
+rm -rf "$live/skills/personal-experiment" "$dest"
+rm -f "$live/rules/00-routing.md"
+if GROK_HOME="$live" SNAPSHOT_VENDOR="$dest" "$ROOT/scripts/snapshot-live.sh" >/tmp/gbf-snap.out 2>/tmp/gbf-snap.err; then
+  echo "FAIL snapshot accepted a missing owned rule" >&2
+  exit 1
+fi
+grep -q '00-routing.md' /tmp/gbf-snap.err
+echo "OK  missing owned rule fails snapshot"
+
 printf 'test-snapshot-allowlist passed\n'

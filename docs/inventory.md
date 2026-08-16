@@ -1,6 +1,6 @@
 # Live inventory (2026-08-16)
 
-Product identity: **GrokBestFriend 1.1.0**. Captured from the source Linux host. See `vendor/inventory.json` for the machine-readable copy.
+Product identity: **GrokBestFriend 1.1.1**. Captured from the source Linux host. See `vendor/inventory.json` for the machine-readable copy. Install preserves foreign skills/rules/hooks, journals a crash-safe transaction, and enforces `vendor/runtime-policy.json` (`yolo=false`, `permission_mode=ask`, compat off).
 
 Planning skills `ask-matt` `grill-with-docs` `to-spec` `to-tickets` are model-invocable. Bundled `/implement` stays slash-only. Routing allows one primary specialist plus at most one verification specialist when a risk or measured-performance trigger is on.
 

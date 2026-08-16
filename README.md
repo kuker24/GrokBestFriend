@@ -4,7 +4,7 @@ Portable snapshot of a live GrokBuild setup: skills, routing rules, hooks, MCP, 
 
 This is not Grok itself. It installs the official Grok CLI, then layers the same system on top.
 
-**Current: v1.1.0** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB)
+**Current: v1.1.1** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB). Refero/Motionsites redistribution is **not cleared** — see `THIRD_PARTY_NOTICES.md`.
 
 ## New laptop
 
@@ -33,7 +33,7 @@ Check:
 
 CI on `main` runs overlay, doctor dry-run, secret scan, MCP policy fixtures, routing eval, source integrity, snapshot allowlist, and transactional install tests.
 
-`./uninstall.sh` removes owned skills/rules/hooks/helper/manifest and leaves the Grok CLI and credentials in place. `./restore.sh` rolls back the last install backup.
+`./uninstall.sh` removes **owned** skills/rules/hooks/helper/manifest and leaves the Grok CLI, credentials, foreign skills, and the learning log in place. `./restore.sh` rolls back the last **managed** backup (skills/rules/hooks/config/helper/manifest, plus rc snippets this run added). Grok CLI, `uv`, and host tools are residual and are not uninstalled on rollback.
 
 ## What is installed
 
@@ -96,7 +96,9 @@ On the source machine, after skills or rules change:
 ./scripts/snapshot-live.sh
 ```
 
-Snapshot copies only the 18 official user skills. Extra live skills abort the snapshot unless you pass `--allow-extra NAME`. `/to-spec` and `/to-tickets` write under `.scratch/`, which is gitignored.
+Snapshot copies only the 18 official user skills. Extra live skills abort the snapshot unless you pass `--ignore-extra NAME` (they are never copied). New skills enter vendor only through the allowlist. `/to-spec` and `/to-tickets` write under `.scratch/`, which is gitignored.
+
+Install is exclusive-locked and journaled (`PREPARING` → `COMMITTED`). A leftover `SWAPPED` transaction refuses a new install; recover with `./install.sh --recover` or `./restore.sh`. Unowned `skills/implement` / `skills/code-review` (no GBF marker, not in the GBF manifest) fail the install instead of being deleted. After `main` is protected, run `./scripts/enable-main-protection.sh` once (repo admin).
 
 ## macOS
 

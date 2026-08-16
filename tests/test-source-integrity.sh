@@ -58,6 +58,21 @@ if re.search(r"mcp add.*\|\|\s*true", mcp) or re.search(r"mcp disable.*\|\|\s*tr
 else:
     ok("mcp.sh has no || true on add/disable")
 
+tx = (root / "lib/transaction.sh").read_text(encoding="utf-8")
+if "old-skill" in tx or "always delete" in tx.lower():
+    error("transaction.sh still encodes destructive extra-skill deletion")
+else:
+    ok("transaction.sh does not hard-code extra-skill deletion")
+if "--allow-extra" in (root / "scripts/snapshot-live.sh").read_text(encoding="utf-8") and \
+        "not supported" not in (root / "scripts/snapshot-live.sh").read_text(encoding="utf-8"):
+    error("snapshot still implements --allow-extra copy")
+else:
+    ok("snapshot does not copy extras")
+if not (root / "vendor/runtime-policy.json").is_file():
+    error("missing vendor/runtime-policy.json")
+else:
+    ok("runtime-policy.json present")
+
 version = (root / "VERSION").read_text(encoding="utf-8").strip()
 snapshot = str(sources.get("snapshot", ""))
 if version not in snapshot:

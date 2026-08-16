@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 HOME_GROK="${GROK_HOME:-$HOME/.grok}"
 VENDOR_ROOT="${SNAPSHOT_VENDOR:-$ROOT/vendor}"
-ALLOW_EXTRA=()
+IGNORE_EXTRA=()
 
 usage() {
   cat <<'EOF'
@@ -12,16 +12,20 @@ Copy the official allowlisted skills, rules, and hook from the live Grok home.
 
 Usage:
   ./scripts/snapshot-live.sh
-  ./scripts/snapshot-live.sh --allow-extra NAME
+  ./scripts/snapshot-live.sh --ignore-extra NAME
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --allow-extra)
-      [[ -n "${2:-}" ]] || { echo "missing name after --allow-extra" >&2; exit 1; }
-      ALLOW_EXTRA+=("$2")
+    --ignore-extra)
+      [[ -n "${2:-}" ]] || { echo "missing name after --ignore-extra" >&2; exit 1; }
+      IGNORE_EXTRA+=("$2")
       shift 2
+      ;;
+    --allow-extra|--include-extra)
+      echo "ERROR: $1 is not supported. Extra skills are not snapshotted. Use --ignore-extra NAME to skip the extra, or add the skill to vendor/skill-allowlist.txt after review." >&2
+      exit 1
       ;;
     -h|--help)
       usage
@@ -41,9 +45,17 @@ ALLOWLIST="$ROOT/vendor/skill-allowlist.txt"
 mapfile -t OFFICIAL < <(grep -E -v '^[[:space:]]*(#|$)' "$ALLOWLIST")
 [[ ${#OFFICIAL[@]} -gt 0 ]] || { echo "skill allowlist is empty" >&2; exit 1; }
 
-allowed() {
+ignored() {
   local name="$1" item
-  for item in "${OFFICIAL[@]}" "${ALLOW_EXTRA[@]}"; do
+  for item in "${IGNORE_EXTRA[@]}"; do
+    [[ "$item" == "$name" ]] && return 0
+  done
+  return 1
+}
+
+official() {
+  local name="$1" item
+  for item in "${OFFICIAL[@]}"; do
     [[ "$item" == "$name" ]] && return 0
   done
   return 1
@@ -53,14 +65,31 @@ extras=()
 for live in "$HOME_GROK/skills"/*; do
   [[ -d "$live" ]] || continue
   name="$(basename -- "$live")"
-  if ! allowed "$name"; then
-    extras+=("$name")
+  if official "$name"; then
+    continue
   fi
+  if ignored "$name"; then
+    continue
+  fi
+  extras+=("$name")
 done
 if [[ ${#extras[@]} -gt 0 ]]; then
   echo "ERROR: live home has skills outside the official allowlist:" >&2
   printf '  %s\n' "${extras[@]}" >&2
-  echo "Pass --allow-extra NAME to include a specific extra skill." >&2
+  echo "Pass --ignore-extra NAME to skip a specific extra skill. Extra skills are never copied." >&2
+  exit 1
+fi
+
+missing=()
+for name in "${OFFICIAL[@]}"; do
+  [[ -d "$HOME_GROK/skills/$name" ]] || missing+=("skills/$name")
+done
+for rel in hooks/impeccable.json rules/00-routing.md rules/01-verification.md; do
+  [[ -f "$HOME_GROK/$rel" ]] || missing+=("$rel")
+done
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo "ERROR: owned live files are missing; refusing to keep a stale vendor copy:" >&2
+  printf '  %s\n' "${missing[@]}" >&2
   exit 1
 fi
 
@@ -68,14 +97,13 @@ mkdir -p "$VENDOR_ROOT/skills" "$VENDOR_ROOT/hooks" "$VENDOR_ROOT/rules"
 
 for name in "${OFFICIAL[@]}"; do
   src="$HOME_GROK/skills/$name"
-  [[ -d "$src" ]] || { echo "missing live skill $src" >&2; exit 1; }
   mkdir -p "$VENDOR_ROOT/skills/$name"
-  rsync -a --delete "$src/" "$VENDOR_ROOT/skills/$name/"
+  rsync -a --delete --exclude '.grokbestfriend-owned.json' "$src/" "$VENDOR_ROOT/skills/$name/"
 done
 
-[[ -f "$HOME_GROK/hooks/impeccable.json" ]] && cp -a "$HOME_GROK/hooks/impeccable.json" "$VENDOR_ROOT/hooks/impeccable.json"
-[[ -f "$HOME_GROK/rules/00-routing.md" ]] && cp -a "$HOME_GROK/rules/00-routing.md" "$VENDOR_ROOT/rules/00-routing.md"
-[[ -f "$HOME_GROK/rules/01-verification.md" ]] && cp -a "$HOME_GROK/rules/01-verification.md" "$VENDOR_ROOT/rules/01-verification.md"
+cp -a "$HOME_GROK/hooks/impeccable.json" "$VENDOR_ROOT/hooks/impeccable.json"
+cp -a "$HOME_GROK/rules/00-routing.md" "$VENDOR_ROOT/rules/00-routing.md"
+cp -a "$HOME_GROK/rules/01-verification.md" "$VENDOR_ROOT/rules/01-verification.md"
 
 python3 "$ROOT/lib/overlay.py" --dest "$VENDOR_ROOT/skills/found-this-design" --name found-this-design --prepend ""
 python3 - "$VENDOR_ROOT/skills/found-this-design" <<'PY'

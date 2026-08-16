@@ -49,7 +49,9 @@ grok plugin list
 
 Expected MCP: `codebase-memory-mcp` and `context7` enabled **and healthy**; `serena` and `exa` registered but disabled. Plugin list empty. Doctor fails if a required server is missing, disabled, on the wrong URL/command, or unhealthy.
 
-If install fails after the swap, the installer restores the previous owned skills/rules/hooks automatically. Manual rollback: `./restore.sh`.
+If install fails after the swap, or the process dies mid-transaction, the installer restores **managed** surfaces (skills/rules/hooks/config/helper/manifest, plus rc snippets it added). It does **not** uninstall a Grok CLI or `uv` that this run installed. Manual rollback: `./restore.sh`. Leftover `SWAPPED` state: `./install.sh --recover`.
+
+Foreign skills, rules, and hooks stay in place. An unowned `~/.grok/skills/implement` or `code-review` (no `.grokbestfriend-owned.json`, not listed in the GBF manifest) fails install instead of being deleted.
 
 ## 5. Optional surfaces
 

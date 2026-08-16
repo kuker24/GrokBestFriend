@@ -108,6 +108,9 @@ grt_doctor() {
   local skill
   for skill in "${GRT_SKILLS_VENDOR[@]}"; do
     check "skill $skill" test -f "$GRT_SKILLS/$skill/SKILL.md"
+    if [[ -f "$GRT_SKILLS/$skill/SKILL.md" && ! -f "$GRT_SKILLS/$skill/.grokbestfriend-owned.json" ]]; then
+      warn "skill $skill ownership marker" false
+    fi
   done
 
   python3 "$GRT_ROOT/lib/validate_skills.py" --skills "$GRT_SKILLS" --routing "$GRT_RULES/00-routing.md" || failed=1
@@ -126,17 +129,16 @@ grt_doctor() {
     grt_info "OK  no browser-act chrome-direct"
   fi
 
-  if grep -A6 '^\[compat.claude\]' "$GRT_HOME/config.toml" | grep -q 'skills = true'; then
-    grt_error "FAIL compat.claude skills is on"
-    failed=1
+  if [[ -f "$GRT_HOME/config.toml" ]]; then
+    if python3 "$GRT_ROOT/lib/runtime_policy.py" check \
+      --config "$GRT_HOME/config.toml" \
+      --policy "$GRT_VENDOR/runtime-policy.json"; then
+      :
+    else
+      failed=1
+    fi
   else
-    grt_info "OK  compat.claude remains off"
-  fi
-
-  if grep -q 'xAI Official' "$GRT_HOME/config.toml"; then
-    grt_info "OK  official marketplace source"
-  else
-    grt_error "FAIL official marketplace source missing"
+    grt_error "FAIL missing config.toml"
     failed=1
   fi
 
@@ -190,12 +192,48 @@ else:
   rm -f -- "$list_tmp" "$doctor_tmp"
 
   if command -v "$GRT_GROK" >/dev/null 2>&1; then
-    local plugins
-    plugins="$("$GRT_GROK" plugin list 2>/dev/null || true)"
-    if printf '%s\n' "$plugins" | grep -qi 'No plugins installed'; then
-      grt_info "OK  no Grok plugins (matches this snapshot)"
+    local plugins plugin_json plugin_count
+    plugin_json="$("$GRT_GROK" plugin list --json 2>/dev/null || true)"
+    plugin_count="$(printf '%s\n' "$plugin_json" | python3 -c '
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw:
+    print(0)
+    raise SystemExit
+try:
+    data=json.loads(raw)
+except json.JSONDecodeError:
+    print(-1)
+    raise SystemExit
+if isinstance(data, dict):
+    items=data.get("plugins") or data.get("installed") or []
+elif isinstance(data, list):
+    items=data
+else:
+    items=[]
+print(len(items))
+' 2>/dev/null || printf '%s\n' -1)"
+    if [[ "$plugin_count" == 0 ]]; then
+      grt_info "OK  no Grok plugins"
+    elif [[ "$plugin_count" == -1 ]]; then
+      plugins="$("$GRT_GROK" plugin list 2>/dev/null || true)"
+      if printf '%s\n' "$plugins" | grep -qi 'No plugins installed'; then
+        grt_info "OK  no Grok plugins"
+      elif [[ "$GRT_DOCTOR_STRICT" == 1 ]]; then
+        grt_error "FAIL PLUGIN_OVERRIDE (strict): $plugins"
+        failed=1
+      else
+        grt_warn "WARN PLUGIN_OVERRIDE $plugins"
+        warned=1
+      fi
     else
-      grt_info "NOTE plugin list: $plugins"
+      if [[ "$GRT_DOCTOR_STRICT" == 1 ]]; then
+        grt_error "FAIL PLUGIN_OVERRIDE (strict): $plugin_count installed"
+        failed=1
+      else
+        grt_warn "WARN PLUGIN_OVERRIDE $plugin_count plugin(s) installed"
+        warned=1
+      fi
     fi
   fi
 

@@ -14,6 +14,8 @@ It does not turn on `[compat.claude]`.
 
 `install-grok-runtime.sh` is a wrapper around `install.sh`.
 
+Install clones live `skills`/`rules`/`hooks`, overlays owned names, and writes `.grokbestfriend-owned.json` markers. A failed or crashed install restores those managed surfaces plus `config.toml`. It does not uninstall the Grok CLI or `uv`. Leftover `SWAPPED` state: `./install.sh --recover`.
+
 ## What lands where
 
 | Surface | Path |

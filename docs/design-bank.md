@@ -14,6 +14,10 @@ Root directory:
 
 Skip with `./install.sh --skip-design-bank`.
 
+If `~/Design` (or `$GROK_DESIGN_BANK`) already has both catalogs, install reuses it. If the dest does not exist, install extracts to a temp directory and atomically renames it. If the dest exists, is nonempty, and is **not** a valid catalog tree, install fails instead of mixing files.
+
+Redistribution of Refero/Motionsites content is **not cleared**. See `THIRD_PARTY_NOTICES.md`. The next public release must verify terms or default to a user-supplied bank.
+
 ## Pack again on the source machine
 
 ```bash

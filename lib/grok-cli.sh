@@ -59,6 +59,7 @@ grt_ensure_path() {
     grt_info "Add to PATH: export PATH=\"$extra:\$PATH\""
     return 0
   fi
+  GRT_RC_PATH="$rc"
   if grep -Fq "$GRT_PATH_MARKER" "$rc"; then
     return 0
   fi
@@ -70,6 +71,7 @@ grt_ensure_path() {
     printf '\n%s\n' "$GRT_PATH_MARKER"
     printf 'export PATH="$HOME/.grok/bin:$HOME/.local/bin:$PATH"\n'
   } >>"$rc"
+  GRT_CREATED_PATH_MARKER=1
   grt_info "Appended PATH helper to $rc"
 }
 

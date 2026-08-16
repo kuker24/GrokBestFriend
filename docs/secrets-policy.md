@@ -25,6 +25,6 @@ This repository is public. The installer is written so a new laptop can match th
 gitleaks detect --source . --no-git
 ```
 
-If the configured tests fail, do not push. `gitleaks` is required on the source machine; GitHub Actions currently runs the repo secret-pattern test, not a gitleaks job.
+If the configured tests fail, do not push. CI runs the repo secret-pattern test and a pinned `gitleaks` artifact from `vendor/sources.json`.
 
 `.scratch/` is gitignored so local `/to-spec` and `/to-tickets` files do not land in git. Snapshot copies only the official skill allowlist.

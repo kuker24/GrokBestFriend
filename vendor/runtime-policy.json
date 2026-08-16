@@ -1,0 +1,24 @@
+{
+  "enforced": {
+    "ui.yolo": false,
+    "ui.permission_mode": "ask",
+    "compat.claude.skills": false,
+    "compat.claude.rules": false,
+    "compat.claude.agents": false,
+    "compat.claude.mcps": false,
+    "compat.claude.hooks": false,
+    "compat.cursor.skills": false,
+    "compat.cursor.rules": false,
+    "compat.cursor.agents": false,
+    "compat.cursor.mcps": false,
+    "compat.cursor.hooks": false,
+    "marketplace.official.git": "https://github.com/xai-org/plugin-marketplace.git"
+  },
+  "overridable": [
+    "models.default",
+    "models.default_reasoning_effort",
+    "ui.max_thoughts_width",
+    "ui.fork_secondary_model",
+    "ui.compact_mode"
+  ]
+}

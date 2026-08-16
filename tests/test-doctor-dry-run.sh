@@ -12,6 +12,7 @@ required = [
     "vendor/inventory.json",
     "vendor/config/user.toml",
     "vendor/hooks/impeccable.json",
+    "vendor/runtime-policy.json",
     "vendor/rules/00-routing.md",
     "vendor/rules/01-verification.md",
     "vendor/skills/impeccable/SKILL.md",

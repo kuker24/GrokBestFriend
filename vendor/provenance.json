@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "product": "GrokBestFriend",
+  "productVersion": "1.1.1",
+  "firstPartyLicense": "MIT",
+  "components": [
+    {
+      "component": "adhd",
+      "path": "vendor/skills/adhd",
+      "upstream": "vendored skill; license in SKILL.md frontmatter",
+      "version": null,
+      "license": "MIT",
+      "modified": true,
+      "redistribution": "mit"
+    },
+    {
+      "component": "impeccable",
+      "path": "vendor/skills/impeccable",
+      "upstream": "vendored skill; license in SKILL.md frontmatter",
+      "version": null,
+      "license": "Apache-2.0",
+      "modified": true,
+      "redistribution": "apache-2.0"
+    },
+    {
+      "component": "other-user-skills",
+      "path": "vendor/skills",
+      "upstream": "live ~/.grok/skills snapshot",
+      "version": null,
+      "license": "not-stated-in-frontmatter",
+      "modified": true,
+      "redistribution": "unknown"
+    },
+    {
+      "component": "design-bank",
+      "path": "GitHub Release v1.0.0 Design-bank.tgz",
+      "upstream": "Refero + Motionsites catalogs packed by this project",
+      "version": "1.0.0",
+      "license": "not-cleared",
+      "modified": true,
+      "redistribution": "unknown"
+    }
+  ]
+}
