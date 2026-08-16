@@ -73,6 +73,14 @@ if not (root / "vendor/runtime-policy.json").is_file():
 else:
     ok("runtime-policy.json present")
 
+protect = (root / "scripts/enable-main-protection.sh").read_text(encoding="utf-8")
+if "reconciling id" in protect:
+    error("protection script still auto-picks the first duplicate main-ci")
+elif "Resolve the duplicates" not in protect or "exit 1" not in protect:
+    error("protection script does not fail closed on duplicate main-ci")
+else:
+    ok("protection script fails closed on duplicate main-ci")
+
 version = (root / "VERSION").read_text(encoding="utf-8").strip()
 snapshot = str(sources.get("snapshot", ""))
 if version not in snapshot:

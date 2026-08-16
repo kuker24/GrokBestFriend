@@ -98,7 +98,7 @@ On the source machine, after skills or rules change:
 
 Snapshot copies only the 18 official user skills. Extra live skills abort the snapshot unless you pass `--ignore-extra NAME` (they are never copied). New skills enter vendor only through the allowlist. `/to-spec` and `/to-tickets` write under `.scratch/`, which is gitignored.
 
-Install is exclusive-locked and journaled (`PREPARING` → `COMMITTED`). A leftover `SWAPPED` transaction refuses a new install; recover with `./install.sh --recover` or `./restore.sh`. Unowned `skills/implement` / `skills/code-review` (no GBF marker, not in the GBF manifest) fail the install instead of being deleted. After `main` is protected, run `./scripts/enable-main-protection.sh` anytime (repo admin); the script reconciles the `main-ci` ruleset.
+Install is exclusive-locked and journaled (`PREPARING` → `COMMITTED`). A leftover `SWAPPED` transaction refuses a new install; recover with `./install.sh --recover` or `./restore.sh`. Unowned `skills/implement` / `skills/code-review` (no GBF marker, not in the GBF manifest) fail the install instead of being deleted. After `main` is protected, run `./scripts/enable-main-protection.sh` anytime (repo admin); the script reconciles a single `main-ci` ruleset and fails if duplicates exist.
 
 ## macOS
 
