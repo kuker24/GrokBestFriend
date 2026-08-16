@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Create a GitHub ruleset that requires CI before main updates.
-# Not run by install.sh. Needs repo admin.
+# Reconcile the GitHub ruleset that requires CI before main updates.
+# Not run by install.sh. Needs repo admin. Idempotent: create or update main-ci.
 set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -52,9 +52,24 @@ payload='{
   ]
 }'
 
-echo "Creating ruleset on $repo (require CI job test, no force-push, PR required, branch up to date)"
-if ! gh api --method POST "repos/$repo/rulesets" --input - <<<"$payload"; then
-  echo "Failed. You need admin on $repo. Create the ruleset in the GitHub UI instead." >&2
-  exit 1
+mapfile -t existing_ids < <(gh api "repos/$repo/rulesets" --jq '.[] | select(.name=="main-ci") | .id')
+if ((${#existing_ids[@]} > 1)); then
+  echo "WARN: found ${#existing_ids[@]} rulesets named main-ci; reconciling id ${existing_ids[0]}" >&2
 fi
-echo "ruleset created"
+
+if ((${#existing_ids[@]} > 0)); then
+  ruleset_id="${existing_ids[0]}"
+  echo "Updating ruleset main-ci ($ruleset_id) on $repo (require CI job test, no force-push, PR required, branch up to date)"
+  if ! gh api --method PUT "repos/$repo/rulesets/$ruleset_id" --input - <<<"$payload"; then
+    echo "Failed. You need admin on $repo. Update the ruleset in the GitHub UI instead." >&2
+    exit 1
+  fi
+  echo "ruleset updated"
+else
+  echo "Creating ruleset main-ci on $repo (require CI job test, no force-push, PR required, branch up to date)"
+  if ! gh api --method POST "repos/$repo/rulesets" --input - <<<"$payload"; then
+    echo "Failed. You need admin on $repo. Create the ruleset in the GitHub UI instead." >&2
+    exit 1
+  fi
+  echo "ruleset created"
+fi
