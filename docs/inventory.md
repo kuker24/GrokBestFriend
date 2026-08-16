@@ -1,6 +1,8 @@
-# Live inventory (2026-08-15)
+# Live inventory (2026-08-16)
 
 Captured from the source Linux host. See `vendor/inventory.json` for the machine-readable copy.
+
+Planning skills `ask-matt` `grill-with-docs` `to-spec` `to-tickets` are model-invocable. Bundled `/implement` stays slash-only.
 
 ## Grok
 

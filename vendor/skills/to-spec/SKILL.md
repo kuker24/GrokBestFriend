@@ -1,22 +1,22 @@
 ---
 name: to-spec
-description: Turn the current conversation into a spec and publish it to the project issue tracker — no interview, just synthesis of what you've already discussed.
-disable-model-invocation: true
+description: Turn the current conversation into a spec and publish it locally under .scratch — no interview, just synthesis of what you already discussed. Use after grilling, or when the user asks for a spec or /to-spec.
+when-to-use: "Use after /grill-with-docs, or when the user asks to write a spec or run /to-spec. Do not interview. Skip ordinary implementation."
 ---
 
 This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user — just synthesize what you already know.
 
-The issue tracker and triage label vocabulary should have been provided to you — run `/setup-matt-pocock-skills` if not.
+Default tracker is local files. Do not run the missing Matt tracker-setup command. If the user asked for GitHub issues and `gh` is authenticated, publish with `/gh-axi`. Otherwise write the spec under `.scratch/<feature-slug>/spec.md`.
 
 ## Process
 
-1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.
+1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching. If Codebase Memory has no project for cwd, skip it and use repo files.
 
 2. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
 
 Check with the user that these seams match their expectations.
 
-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+3. Write the spec using the template below, then publish it. Local default: `.scratch/<feature-slug>/spec.md`. GitHub only if the user asked and `gh` is authenticated.
 
 <spec-template>
 

@@ -1,8 +1,3 @@
----
-name: grill-with-docs
-description: Relentless interview to sharpen a plan. Writes CONTEXT.md, a glossary, and ADRs as you go. Use when a feature still needs a plan, the user wants grilling, or they ask for /grill-with-docs.
-when-to-use: "Use when a feature still needs a plan, an interview, a glossary, or ADRs. Skip ordinary implementation, typo fixes, and architecture DAGs (those use bundled /design)."
----
 <!-- grokbuild-overlay:grill-with-docs -->
 
 # Grill with docs

@@ -56,6 +56,7 @@ grt_install_skills() {
     prepend=""
     case "$name" in
       ask-matt) prepend="$GRT_ROOT/templates/skill-overlays/ask-matt.prepend.md" ;;
+      grill-with-docs) prepend="$GRT_ROOT/templates/skill-overlays/grill-with-docs.body.md" ;;
       browser-act) prepend="$GRT_ROOT/templates/skill-overlays/browser-act.prepend.md" ;;
       chrome-devtools-axi) prepend="$GRT_ROOT/templates/skill-overlays/chrome-devtools-axi.prepend.md" ;;
     esac

@@ -10,42 +10,115 @@ from pathlib import Path
 
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
+DEFAULT_PATH_SKILLS = ("ask-matt", "grill-with-docs", "to-spec", "to-tickets")
 
-def upsert_frontmatter(text: str, updates: dict[str, str]) -> str:
+WHEN_TO_USE = {
+    "ask-matt": (
+        "Use when the user is choosing a workflow or asks which skill to run. "
+        "Skip when the task is already a clear implement, review, design, or UI job."
+    ),
+    "grill-with-docs": (
+        "Use when a feature still needs a plan, an interview, a glossary, or ADRs. "
+        "Skip ordinary implementation, typo fixes, and architecture DAGs (those use bundled /design)."
+    ),
+    "to-spec": (
+        "Use after /grill-with-docs, or when the user asks to write a spec or run /to-spec. "
+        "Do not interview. Skip ordinary implementation."
+    ),
+    "to-tickets": (
+        "Use after a spec, or when the user asks to break work into tickets or run /to-tickets. "
+        "Skip ordinary single-session implementation."
+    ),
+}
+
+SETUP_ANY_RE = re.compile(r"[^\n]*`/setup-matt-pocock-skills`[^\n]*\n?")
+GRILL_STUB_RE = re.compile(r"`?/grilling`?|`?/domain-modeling`?")
+MAP_HEADING_RE = re.compile(r"^## GrokBuild map\s*$", re.MULTILINE)
+
+
+def overlay_marker(name: str) -> str:
+    return f"<!-- grokbuild-overlay:{name} -->"
+
+
+def upsert_frontmatter(text: str, updates: dict[str, str | None]) -> str:
     match = FRONTMATTER_RE.match(text)
     if not match:
         lines = ["---"]
         for key, value in updates.items():
-            lines.append(f"{key}: {value}")
+            if value is None:
+                continue
+            lines.append(f"{key}: {_render_fm_value(value)}")
         lines.extend(["---", "", text])
         return "\n".join(lines)
 
     body = text[match.end() :]
     fm = match.group(1)
     for key, value in updates.items():
-        rendered = json.dumps(value) if any(ch in value for ch in ":#{}[]&*?|>!%@`") or " " in value else value
-        pattern = re.compile(rf"^{re.escape(key)}\s*:.*$", re.MULTILINE)
-        line = f"{key}: {rendered}"
+        pattern = re.compile(rf"^{re.escape(key)}\s*:.*$(?:\n[ \t].*)*", re.MULTILINE)
+        if value is None:
+            fm = pattern.sub("", fm, count=1)
+            continue
+        line = f"{key}: {_render_fm_value(value)}"
         if pattern.search(fm):
             fm = pattern.sub(line, fm, count=1)
         else:
             fm = fm.rstrip() + f"\n{line}\n"
-    return f"---\n{fm}\n---\n{body}"
+    fm = re.sub(r"\n{3,}", "\n\n", fm).strip("\n") + "\n"
+    return f"---\n{fm}---\n{body}"
+
+
+def _render_fm_value(value: str) -> str:
+    if any(ch in value for ch in ":#{}[]&*?|>!%@`") or " " in value:
+        return json.dumps(value)
+    return value
+
+
+def split_frontmatter(text: str) -> tuple[str, str]:
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        return "", text
+    return text[: match.end()], text[match.end() :]
 
 
 def prepend_after_frontmatter(text: str, extra: str) -> str:
+    extra = extra.lstrip("\n")
     if extra in text:
         return text
     match = FRONTMATTER_RE.match(text)
     if not match:
         return extra + text
-    head = text[: match.end()]
-    body = text[match.end() :]
-    return head + extra + body
+    return text[: match.end()] + extra + text[match.end() :]
+
+
+def ensure_overlay_body(text: str, name: str, extra: str) -> str:
+    extra = extra.lstrip("\n")
+    if not extra.endswith("\n"):
+        extra += "\n"
+    if name not in ("ask-matt", "grill-with-docs"):
+        return prepend_after_frontmatter(text, extra)
+
+    marker = overlay_marker(name)
+    if marker not in extra:
+        extra = f"{marker}\n\n{extra}"
+
+    head, body = split_frontmatter(text)
+    stale = False
+    if name == "ask-matt":
+        stale = MAP_HEADING_RE.search(body) is not None or body.count(marker) != 1
+        if "# Ask Matt" not in body:
+            stale = True
+    elif name == "grill-with-docs":
+        stale = GRILL_STUB_RE.search(body) is not None or marker not in body
+
+    if marker in body and not stale:
+        return text
+    return head + extra
 
 
 def replace_all(text: str, pairs: list[tuple[str, str]]) -> str:
     for old, new in pairs:
+        if new in text:
+            continue
         text = text.replace(old, new)
     return text
 
@@ -54,8 +127,12 @@ def apply_skill(dest: Path, name: str, prepend: str | None) -> None:
     skill = dest / "SKILL.md"
     text = skill.read_text(encoding="utf-8")
 
-    updates: dict[str, str] = {"name": name}
+    updates: dict[str, str | None] = {"name": name}
     extras: list[tuple[str, str]] = []
+
+    if name in DEFAULT_PATH_SKILLS:
+        updates["disable-model-invocation"] = None
+        updates["when-to-use"] = WHEN_TO_USE[name]
 
     if name == "matt-implement":
         extras = [
@@ -129,10 +206,13 @@ def apply_skill(dest: Path, name: str, prepend: str | None) -> None:
         )
     elif name == "found-this-design":
         extras = []
+    elif name in ("to-spec", "to-tickets"):
+        text = SETUP_ANY_RE.sub("", text)
+        text = text.replace("run `/setup-matt-pocock-skills` if not.", "")
 
     text = upsert_frontmatter(text, updates)
     if prepend:
-        text = prepend_after_frontmatter(text, prepend)
+        text = ensure_overlay_body(text, name, prepend)
     if extras:
         text = replace_all(text, extras)
     skill.write_text(text, encoding="utf-8")

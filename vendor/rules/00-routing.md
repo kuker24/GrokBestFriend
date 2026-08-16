@@ -10,16 +10,21 @@ Do not infer a model provider from a logical model name. Treat custom-gateway al
 
 ## Default path
 
-1. If repository evidence is enough, do the work.
-2. If the user is choosing a workflow, use `/ask-matt`.
-3. If the work is a feature that still needs a plan: `/grill-with-docs` → `/to-spec` → `/to-tickets`.
-4. Write code with bundled `/implement`. Use `/tdd` when the work is test-first.
-5. Review with bundled `/review`.
-6. Pick a verification profile from `01-verification.md` by changed surface and risk. Required configured failures block a completion claim.
+Follow this tree here. Do not load `/ask-matt` unless the user is choosing a workflow.
+
+1. **Repo evidence is enough** → do the work. No specialist. Verification: FAST or STANDARD.
+2. **User typed a slash skill** → load that skill. Do not substitute.
+3. **User is choosing a workflow** (`which skill`, `alur apa`, `ask matt`) → load `/ask-matt`.
+4. **Architecture / PR-plan DAG** → bundled `/design`. After approval → `/execute-plan`.
+5. **Feature still needs a plan** (interview, glossary, ADR) → `/grill-with-docs`. Then `/to-spec` → `/to-tickets` only if the user asked for tickets or the work is multi-session.
+6. **Ordinary implementation** → write in this session. Use `/tdd` when test-first. Do **not** auto-start bundled `/implement`.
+7. **User asked `/implement` or the Matt ticket loop** → bundled `/implement`, or `/matt-implement` only for a `/to-tickets` ticket.
+8. **Review** → bundled `/review`. `/matt-code-review` only if the user asked for two-axis Standards + Spec. `/code-review` only if the user asked for the harsh slash audit.
+9. **Verification** → pick a profile from `01-verification.md` by changed surface and risk. Required configured failures block a completion claim.
 
 ## Knowledge
 
-- Repository structure and impact: MCP `codebase-memory-mcp` first. Discover tools with `search_tool`, call them with `use_tool`.
+- Repository structure and impact: MCP `codebase-memory-mcp` first. Discover tools with `search_tool`, call them with `use_tool`. If Codebase Memory has no project for cwd, skip it and use repo files. Do not retry.
 - Exact cross-file symbol work: enable and use MCP `serena` only after Codebase Memory and simpler repo evidence are not enough. Do not run Serena and Codebase Memory as the main brain at the same time.
 - Current library or framework docs: MCP `context7` only when repo evidence is insufficient.
 - Broader web research: built-in `web_search` and `web_fetch`. MCP `exa` is registered but disabled until a human completes its OAuth setup (`grok mcp enable exa` after authenticating).
@@ -49,9 +54,8 @@ Do not infer a model provider from a logical model name. Treat custom-gateway al
 
 - Planning and tickets stay on Matt skills: `/grill-with-docs`, `/to-spec`, `/to-tickets`, `/tdd`.
 - Architecture design doc + PR plan (not Matt grilling): bundled `/design`. After that DAG is approved: `/execute-plan`.
-- Default implementation is bundled `/implement`, not `/matt-implement`.
+- Ordinary writes stay in this session. Bundled `/implement` is user-explicit, not the default write path. `/matt-implement` is only for a ticket that `/to-tickets` produced and should stay on the Matt ticket loop.
 - Default review is bundled `/review`. Two-axis Standards + Spec of a pinned diff: `/matt-code-review`. Harsh maintainability audit: bundled `/code-review` (slash only).
-- `/matt-implement` is only for a ticket that was produced by `/to-tickets` and should stay on the Matt ticket loop.
 - Choosing a workflow: `/ask-matt`. Route only to skills that exist on this machine. Matt names that are not installed (`/grill-me`, `/handoff`, `/prototype`, `/triage`, `/wayfinder`, `/setup-matt-pocock-skills`, and the other standalone Matt commands) are not available — use the nearest installed skill.
 
 ## Docs, media tools, and extras
@@ -65,7 +69,8 @@ Do not infer a model provider from a logical model name. Treat custom-gateway al
 
 ## Plugins and extra MCP
 
-- No Grok plugins are installed. Do not assume Vercel or Claude marketplace plugins exist.
+- No Grok plugins are installed. Do not assume Vercel, Figma, Superpowers, official Chrome DevTools, or Claude marketplace plugins exist.
+- Do not install a marketplace plugin from a session unless the user asked for that vendor and the current repo uses it. If a plugin is trusted, add it to this section in the same change.
 - User MCP: `codebase-memory-mcp` and `context7` on; `serena` and `exa` off until a human enables them.
 - `tasks` and `voice` are built-in Grok connectors, not user MCP. Use `tasks` only for scheduled automations the user asked for; `voice` only when they ask about TTS voices.
 

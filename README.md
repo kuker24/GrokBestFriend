@@ -52,7 +52,7 @@ Check:
 
 **Browser / GitHub / risk:** `/browser-act` `/chrome-devtools-axi` `/gh-axi` `/full-audit-keamanan` `/full-performance-audit` `/adhd`
 
-Bundled Grok skills (`/implement`, `/review`, `/imagine`, `/design`, game-asset-*, …) come from the Grok binary, not this repo.
+Bundled Grok skills (`/implement`, `/review`, `/imagine`, `/design`, game-asset-*, …) come from the Grok binary, not this repo. Ordinary writes stay in-session; `/implement` is user-explicit.
 
 ## Design bank
 

@@ -47,6 +47,63 @@ grt_doctor() {
     check "skill $skill" test -f "$GRT_SKILLS/$skill/SKILL.md"
   done
 
+  python3 - "$GRT_SKILLS" "$GRT_RULES/00-routing.md" <<'PY' || failed=1
+import re, sys
+from pathlib import Path
+
+skills = Path(sys.argv[1])
+routing = Path(sys.argv[2]).read_text(encoding="utf-8")
+failed = False
+
+def error(msg):
+    global failed
+    failed = True
+    print("ERROR: FAIL " + msg, file=sys.stderr)
+
+def ok(msg):
+    print("OK  " + msg)
+
+default_path = ("ask-matt", "grill-with-docs", "to-spec", "to-tickets")
+for name in default_path:
+    text = (skills / name / "SKILL.md").read_text(encoding="utf-8")
+    if re.search(r"^disable-model-invocation:\s*true\s*$", text, re.MULTILINE):
+        error(f"{name} still has disable-model-invocation")
+    else:
+        ok(f"{name} is model-invocable")
+
+grill = (skills / "grill-with-docs" / "SKILL.md").read_text(encoding="utf-8")
+if re.search(r"`?/grilling`?|`?/domain-modeling`?", grill):
+    error("grill-with-docs still names missing Matt interview primitives")
+else:
+    ok("grill-with-docs has no missing-primitive stub")
+
+ask = (skills / "ask-matt" / "SKILL.md").read_text(encoding="utf-8")
+maps = len(re.findall(r"^## GrokBuild map\s*$", ask, re.MULTILINE))
+if maps > 1:
+    error(f"ask-matt has {maps} GrokBuild map sections")
+else:
+    ok("ask-matt has at most one GrokBuild map")
+
+for name in ("to-spec", "to-tickets"):
+    text = (skills / name / "SKILL.md").read_text(encoding="utf-8")
+    if "/setup-matt-pocock-skills" in text:
+        error(f"{name} still names the missing tracker-setup command")
+    else:
+        ok(f"{name} uses the local tracker default")
+
+if "If Codebase Memory has no project for cwd" not in routing:
+    error("00-routing.md missing unindexed-cwd skip rule")
+else:
+    ok("00-routing.md skips unindexed Codebase Memory")
+
+if "Do **not** auto-start bundled `/implement`" not in routing:
+    error("00-routing.md missing no-auto-implement rule")
+else:
+    ok("00-routing.md does not auto-start /implement")
+
+raise SystemExit(1 if failed else 0)
+PY
+
   if grep -R -n -E '/home/[^/]+/' "$GRT_SKILLS" >/dev/null 2>&1; then
     grt_error "FAIL live skills still contain a machine home path"
     failed=1
