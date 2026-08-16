@@ -11,11 +11,11 @@ Load this after the visual world is settled and before installing a catalog comp
 
 ## Loop
 
-1. Search. Do not install on the first hit.
-2. Inspect 1–3 candidates (source, dependencies, registry namespace).
+1. Search. Do not install on the first hit. Public-namespace search can add the registry to `components.json`; inspect that git diff and do not keep unused registries.
+2. Inspect 1–3 candidates: registry namespace, dependencies, file targets, and files that already exist in the project.
 3. Pick one that fits the committed world and the surface hierarchy.
-4. Install once. Third-party files stay out of `components/ui`.
-5. Restyle to project tokens. Load `/emil-design-eng` only if motion still needs a pass.
+4. If the candidate would overwrite an existing project file, reject it or require explicit approval. Do not assume third-party items belong in `components/ui`.
+5. Install once. Restyle to project tokens. Load `/emil-design-eng` only if motion still needs a pass.
 
 ## Namespace
 

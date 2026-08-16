@@ -40,6 +40,12 @@ grt_doctor() {
     fi
   }
 
+  if grt_check_node; then
+    grt_info "OK  node $(node --version 2>/dev/null) meets shadcn engines"
+  else
+    failed=1
+  fi
+
   check "grok binary" test -x "$GRT_GROK"
   local wanted_grok
   wanted_grok="$(grt_grok_seen_version)"

@@ -68,7 +68,7 @@ grt_install_mcp() {
 
   [[ -x "$GRT_CODEBASE_MEMORY_BIN" ]] || grt_die "Codebase Memory binary missing: $GRT_CODEBASE_MEMORY_BIN"
   grt_have serena || grt_die "serena is not on PATH"
-  command -v npx >/dev/null 2>&1 || grt_die "npx is not on PATH (needed for pinned shadcn MCP)"
+  grt_require_node
   serena_bin="$(command -v serena)"
 
   grt_mcp_add_stdio codebase-memory-mcp "$GRT_CODEBASE_MEMORY_BIN"
@@ -87,45 +87,9 @@ grt_install_mcp() {
 grt_rewrite_mcp_paths() {
   local serena_bin="$1"
   local shadcn_pin="$2"
-  python3 - "$GRT_HOME/config.toml" "$GRT_CODEBASE_MEMORY_BIN" "$serena_bin" "$shadcn_pin" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-path = Path(sys.argv[1])
-memory_bin = sys.argv[2]
-serena_bin = sys.argv[3]
-shadcn_pin = sys.argv[4]
-text = path.read_text(encoding="utf-8")
-updated = text
-# Keep command lines pointing at the portable binaries even if mcp add was a no-op.
-updated = re.sub(
-    r'(?m)^(\[mcp_servers\.codebase-memory-mcp\][\s\S]*?^command = )".*"',
-    lambda m: f'{m.group(1)}"{memory_bin}"',
-    updated,
-    count=1,
-)
-updated = re.sub(
-    r'(?m)^(\[mcp_servers\.serena\][\s\S]*?^command = )".*"',
-    lambda m: f'{m.group(1)}"{serena_bin}"',
-    updated,
-    count=1,
-)
-if re.search(r'(?m)^\[mcp_servers\.shadcn\]', updated):
-    updated = re.sub(
-        r'(?m)^(\[mcp_servers\.shadcn\][\s\S]*?^args = )\[[\s\S]*?\]',
-        lambda m: f'{m.group(1)}["-y", "shadcn@{shadcn_pin}", "mcp"]',
-        updated,
-        count=1,
-    )
-    if not re.search(r'(?m)^\[mcp_servers\.shadcn\](?:(?!^\[).)*^startup_timeout_sec\s*=', updated):
-        updated = re.sub(
-            r'(?m)^(\[mcp_servers\.shadcn\]\n)',
-            r'\1startup_timeout_sec = 90\n',
-            updated,
-            count=1,
-        )
-if updated != text:
-    path.write_text(updated, encoding="utf-8")
-PY
+  python3 "$GRT_ROOT/lib/mcp_config.py" rewrite \
+    --config "$GRT_HOME/config.toml" \
+    --memory-bin "$GRT_CODEBASE_MEMORY_BIN" \
+    --serena-bin "$serena_bin" \
+    --shadcn-pin "$shadcn_pin"
 }

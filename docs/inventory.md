@@ -41,6 +41,7 @@ Planning skills `ask-matt` `grill-with-docs` `to-spec` `to-tickets` are model-in
 | osv-scanner | 2.4.0 |
 | gitleaks | 8.30.1 |
 | gh | required, login is human |
+| Node.js | `>=20.18.1` plus `npx` (shadcn 4.18.0 engines) |
 | Chromium | required; Google Chrome is refused |
 
 ## Not in this repo

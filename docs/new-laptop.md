@@ -4,14 +4,14 @@ Target: Linux x86_64, same shape as the source machine.
 
 ## 1. System packages
 
-Need `git`, `curl`, `python3`, `tar`, and Node.js (20+). Chromium (not Google Chrome) for browser skills. GitHub CLI (`gh`) for `/gh-axi`.
+Need `git`, `curl`, `python3`, `tar`, and Node.js `>=20.18.1` plus `npx`. Chromium (not Google Chrome) for browser skills. GitHub CLI (`gh`) for `/gh-axi`.
 
 Ubuntu example:
 
 ```bash
 sudo apt update
 sudo apt install -y git curl python3 tar chromium-browser gh
-# Node: use nvm or the distro nodejs package, 20+
+# Node: use nvm or the distro nodejs package, >=20.18.1 (shadcn 4.18.0 engines)
 ```
 
 ## 2. Clone and install
@@ -47,7 +47,7 @@ grok mcp list
 grok plugin list
 ```
 
-Expected MCP: `codebase-memory-mcp`, `context7`, and `shadcn` enabled **and healthy**; `serena` and `exa` registered but disabled. Plugin list empty. Doctor fails if a required server is missing, disabled, on the wrong URL/command, or unhealthy. `shadcn` is the pinned CLI (`npx -y shadcn@<version in vendor/sources.json> mcp`). Need Node.js/`npx` on PATH.
+Expected MCP: `codebase-memory-mcp`, `context7`, and `shadcn` enabled **and healthy**; `serena` and `exa` registered but disabled. Plugin list empty. Doctor fails if a required server is missing, disabled, on the wrong URL/command, or unhealthy. `shadcn` is the pinned CLI (`npx -y shadcn@<version in vendor/sources.json> mcp`). Preflight fails with `FAIL NODE_VERSION` unless Node is `>=20.18.1` and `npx` is on PATH.
 
 If install fails after the swap, or the process dies mid-transaction, the installer restores **managed** surfaces (skills/rules/hooks/config/helper/manifest, plus rc snippets it added). It does **not** uninstall a Grok CLI or `uv` that this run installed. Manual rollback: `./restore.sh`. Leftover `SWAPPED` state: `./install.sh --recover`.
 

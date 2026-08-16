@@ -24,6 +24,26 @@ grt_error() { printf 'ERROR: %s\n' "$*" >&2; }
 grt_die() { grt_error "$*"; exit 1; }
 grt_have() { command -v "$1" >/dev/null 2>&1; }
 
+grt_check_node() {
+  if ! grt_have node; then
+    grt_error "FAIL NODE_MISSING"
+    grt_error "node is not on PATH (needed for pinned shadcn MCP)"
+    return 1
+  fi
+  if ! grt_have npx; then
+    grt_error "FAIL NPX_MISSING"
+    grt_error "npx is not on PATH (needed for pinned shadcn MCP)"
+    return 1
+  fi
+  local found
+  found="$(node --version 2>/dev/null || true)"
+  python3 "$GRT_ROOT/lib/node_version.py" check --found "$found" --sources "$GRT_VENDOR/sources.json"
+}
+
+grt_require_node() {
+  grt_check_node || exit 1
+}
+
 grt_find_grok() {
   if [[ -n "$GRT_GROK" && -x "$GRT_GROK" ]]; then
     return 0
