@@ -27,6 +27,7 @@ Follow this tree here. Do not load `/ask-matt` unless the user is choosing a wor
 - Repository structure and impact: MCP `codebase-memory-mcp` first. Discover tools with `search_tool`, call them with `use_tool`. If Codebase Memory has no project for cwd, skip it and use repo files. Do not retry.
 - Exact cross-file symbol work: enable and use MCP `serena` only after Codebase Memory and simpler repo evidence are not enough. Do not run Serena and Codebase Memory as the main brain at the same time.
 - Current library or framework docs: MCP `context7` only when repo evidence is insufficient.
+- Installable React/shadcn registry items: MCP `shadcn` (pinned CLI). Search, inspect, then install. Context7 stays documentation. Do not treat web search as an installer.
 - Broader web research: built-in `web_search` and `web_fetch`. MCP `exa` is registered but disabled until a human completes its OAuth setup (`grok mcp enable exa` after authenticating).
 - Hard, high-impact, divergent decisions, fuzzy debugging, API or schema alternatives, trap detection: `/adhd` on demand only. Skip ADHD for typos, ordinary CRUD, or bugs with a known cause.
 
@@ -34,6 +35,9 @@ Follow this tree here. Do not load `/ask-matt` unless the user is choosing a wor
 
 - Matching or choosing a visual direction from the local design bank (Refero / Motionsites), including 3–5 recommendations and high-fidelity first-viewport previews: `/found-this-design` first. Then `/impeccable` after a pick.
 - Visual UI once a world is chosen or the brief is already visual: `/impeccable` first.
+- Installable UI components (form, table, chart, icon, hero, marquee, gantt, animated primitive): MCP `shadcn` only. Load Impeccable `reference/ui-hub.md`. Search → inspect 1–3 candidates → pick one → install. Do not add Magic UI, Kibo, 21st.dev, or community UI MCP servers.
+- Decorative components only when they clarify hierarchy, interaction, brand, or data. One authored landing moment. Dashboards may be denser (charts, table, KPI, status) but stay in one system.
+- Use the hub only when cwd has `components.json`. React + Tailwind without init: offer `npx shadcn@<pinned> init`, never silent. Never init this GrokBestFriend repo, a backend or Python tree, or a non-UI cwd. Third-party registry files stay out of `components/ui`.
 - Scroll-scrub fly-through, diorama, or 3D-world landing: `/scroll-world` (it loads bundled `imagine`). Impeccable owns surrounding chrome when the world sits inside an existing site.
 - Website or app UI that also needs designed photos/videos: `/impeccable` owns the surface; load `/visual-studio` for those assets (it loads bundled `imagine`).
 - Photoreal product stills, UGC/ad video, cinematic VFX, identity packs, thumbnails with no UI surface: `/visual-studio` only.
@@ -71,13 +75,15 @@ Follow this tree here. Do not load `/ask-matt` unless the user is choosing a wor
 
 - No Grok plugins are installed. Do not assume Vercel, Figma, Superpowers, official Chrome DevTools, or Claude marketplace plugins exist.
 - Do not install a marketplace plugin from a session unless the user asked for that vendor and the current repo uses it. If a plugin is trusted, add it to this section in the same change.
-- User MCP: `codebase-memory-mcp` and `context7` on; `serena` and `exa` off until a human enables them.
+- User MCP: `codebase-memory-mcp`, `context7`, and `shadcn` on; `serena` and `exa` off until a human enables them.
 - `tasks` and `voice` are built-in Grok connectors, not user MCP. Use `tasks` only for scheduled automations the user asked for; `voice` only when they ask about TTS voices.
 - Local learning events live in `~/.grok/runtime/learning/events.jsonl`. They are evidence for humans. Never auto-edit rules or skills from that log. Promotion path is eval + tests + doctor.
 
 ## Do not
 
 - Do not enable every specialist in one turn.
+- Do not register 21st.dev, Magic UI MCP, Kibo MCP, or unofficial React Bits / Aceternity MCP.
+- Do not run `shadcn init` on GrokBestFriend, backend, or Python repositories.
 - Do not use Serena before Codebase Memory.
 - Do not use ADHD for ordinary work.
 - Do not use Emil for static UI, or Impeccable for motion-only work.

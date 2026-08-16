@@ -16,6 +16,7 @@ required = [
     "vendor/rules/00-routing.md",
     "vendor/rules/01-verification.md",
     "vendor/skills/impeccable/SKILL.md",
+    "vendor/skills/impeccable/reference/ui-hub.md",
     "vendor/skills/found-this-design/SKILL.md",
     "vendor/skills/matt-implement/SKILL.md",
     "lib/grok-chromium-cdp.sh",
@@ -64,6 +65,14 @@ if "Do **not** auto-start bundled `/implement`" not in routing:
     failed = True
 else:
     print("OK  vendor 00-routing.md does not auto-start /implement")
+if "MCP `shadcn`" not in routing or "Never init this GrokBestFriend repo" not in routing:
+    print("ERROR: FAIL vendor 00-routing.md missing shadcn UI hub rules")
+    failed = True
+else:
+    print("OK  vendor 00-routing.md has shadcn UI hub rules")
+if "21st.dev" in routing and "Do not register 21st.dev" not in routing:
+    print("ERROR: FAIL vendor 00-routing.md enables 21st.dev")
+    failed = True
 
 if failed:
     raise SystemExit(1)

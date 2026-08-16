@@ -141,6 +141,14 @@ def evaluate(
             if list(got_args) != list(want_args):
                 report.fail("MCP_ARGS", f"{name} args do not match policy")
 
+        want_command = spec.get("command")
+        if want_command and want_command != "codebase-memory-bin":
+            got_command = item.get("command") or item.get("target")
+            if got_command:
+                got_name = Path(str(got_command)).name
+                if got_name != want_command and str(got_command) != want_command:
+                    report.fail("MCP_COMMAND", f"{name} command must be {want_command}")
+
         if spec.get("command") == "codebase-memory-bin" and memory_bin:
             command = item.get("command") or item.get("target")
             if command and command != memory_bin:

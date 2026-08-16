@@ -4,7 +4,7 @@ Portable snapshot of a live GrokBuild setup: skills, routing rules, hooks, MCP, 
 
 This is not Grok itself. It installs the official Grok CLI, then layers the same system on top.
 
-**Current: v1.1.1** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB). Refero/Motionsites redistribution is **not cleared** — see `THIRD_PARTY_NOTICES.md`.
+**Current: v1.2.0** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB). Refero/Motionsites redistribution is **not cleared** — see `THIRD_PARTY_NOTICES.md`.
 
 ## New laptop
 
@@ -44,7 +44,7 @@ CI on `main` runs overlay, doctor dry-run, secret scan, MCP policy fixtures, rou
 | Rules | `00-routing.md`, `01-verification.md` |
 | Hook | `~/.grok/hooks/impeccable.json` |
 | Config | models, UI, official marketplace, Claude/Cursor compat **off** |
-| MCP | `codebase-memory-mcp` + `context7` **on**; `serena` + `exa` registered but **off** |
+| MCP | `codebase-memory-mcp` + `context7` + `shadcn` **on**; `serena` + `exa` registered but **off** |
 | Tools | `serena`, `browser-act`, `semgrep`, `osv-scanner`, `gitleaks`, `grok-chromium-cdp` |
 | Plugins | none (matches the source machine) |
 | Design bank | Refero + Motionsites → `~/Design` |

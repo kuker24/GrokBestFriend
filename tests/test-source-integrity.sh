@@ -88,6 +88,19 @@ if version not in snapshot:
 else:
     ok("VERSION matches sources.snapshot")
 
+shadcn = (sources.get("sources") or {}).get("shadcn") or {}
+pin = shadcn.get("version")
+policy = json.loads((root / "vendor/mcp-policy.json").read_text(encoding="utf-8"))
+shadcn_args = ((policy.get("servers") or {}).get("shadcn") or {}).get("args") or []
+if not pin:
+    error("sources.shadcn.version missing")
+elif f"shadcn@{pin}" not in shadcn_args:
+    error(f"mcp-policy shadcn args {shadcn_args} do not pin shadcn@{pin}")
+elif "@latest" in " ".join(str(a) for a in shadcn_args):
+    error("mcp-policy shadcn args still use @latest")
+else:
+    ok(f"shadcn MCP pin matches sources ({pin})")
+
 raise SystemExit(1 if failed else 0)
 PY
 

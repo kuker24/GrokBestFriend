@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "capturedAt": "2026-08-16",
-  "productVersion": "1.1.1",
+  "productVersion": "1.2.0",
   "host": "linux-x86_64",
   "grokVersionSeen": "1.0.4",
   "pluginsInstalled": [],
@@ -41,6 +41,7 @@
   "mcp": {
     "codebase-memory-mcp": {"enabled": true, "transport": "stdio"},
     "context7": {"enabled": true, "transport": "http", "url": "https://mcp.context7.com/mcp"},
+    "shadcn": {"enabled": true, "transport": "stdio", "package": "shadcn@4.18.0"},
     "exa": {"enabled": false, "transport": "http", "url": "https://mcp.exa.ai/mcp", "status": "SETUP_REQUIRED"},
     "serena": {"enabled": false, "transport": "stdio", "context": "agent"}
   },
