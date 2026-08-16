@@ -4,7 +4,7 @@ Portable snapshot of a live GrokBuild setup: skills, routing rules, hooks, MCP, 
 
 This is not Grok itself. It installs the official Grok CLI, then layers the same system on top.
 
-**Current: [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0)** · Linux x86_64 · design bank is a Release asset (`Design-bank.tgz`, ~412MB)
+**Current: v1.1.0** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB)
 
 ## New laptop
 
@@ -28,7 +28,12 @@ Check:
 ```bash
 ./install.sh --dry-run
 ./install.sh --doctor
+./restore.sh --list
 ```
+
+CI on `main` runs overlay, doctor dry-run, secret scan, MCP policy fixtures, routing eval, source integrity, snapshot allowlist, and transactional install tests.
+
+`./uninstall.sh` removes owned skills/rules/hooks/helper/manifest and leaves the Grok CLI and credentials in place. `./restore.sh` rolls back the last install backup.
 
 ## What is installed
 
@@ -90,6 +95,8 @@ On the source machine, after skills or rules change:
 ```bash
 ./scripts/snapshot-live.sh
 ```
+
+Snapshot copies only the 18 official user skills. Extra live skills abort the snapshot unless you pass `--allow-extra NAME`. `/to-spec` and `/to-tickets` write under `.scratch/`, which is gitignored.
 
 ## macOS
 

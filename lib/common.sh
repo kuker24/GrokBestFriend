@@ -34,6 +34,11 @@ grt_find_grok() {
     GRT_GROK="$HOME/.grok/bin/grok"
     return 0
   fi
+  if [[ "$GRT_DRY_RUN" == 1 ]]; then
+    GRT_GROK="${GRT_GROK:-grok}"
+    grt_info "WOULD_NEED grok binary"
+    return 0
+  fi
   grt_die "grok binary not found"
 }
 
@@ -58,6 +63,31 @@ node = data.get("sources", {}).get(sys.argv[2], {})
 value = node.get(sys.argv[3], "")
 print(value)
 PY
+}
+
+grt_grok_seen_version() {
+  python3 - "$GRT_VENDOR/sources.json" <<'PY'
+import json, sys
+from pathlib import Path
+data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(data.get("grok", {}).get("seenVersion", ""))
+PY
+}
+
+grt_read_allowlist() {
+  local file="$GRT_VENDOR/skill-allowlist.txt"
+  [[ -f "$file" ]] || grt_die "missing skill allowlist: $file"
+  grep -E -v '^[[:space:]]*(#|$)' "$file"
+}
+
+grt_load_skill_allowlist() {
+  mapfile -t GRT_SKILLS_VENDOR < <(grt_read_allowlist)
+  [[ ${#GRT_SKILLS_VENDOR[@]} -gt 0 ]] || grt_die "skill allowlist is empty"
+}
+
+grt_version_contains() {
+  local output="$1" wanted="$2"
+  [[ -n "$wanted" && "$output" == *"$wanted"* ]]
 }
 
 grt_atomic_write() {

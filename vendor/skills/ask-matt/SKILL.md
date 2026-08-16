@@ -7,7 +7,7 @@ when-to-use: "Use when the user is choosing a workflow or asks which skill to ru
 
 # Ask Matt
 
-Follow `00-routing.md`. Route only to skills installed here. Do not load every specialist.
+Follow `00-routing.md`. Route only to skills installed here. Do not load every specialist. One primary specialist, plus at most one verification specialist when a risk or measured-performance trigger is on.
 
 ## Installed
 

@@ -9,6 +9,7 @@ source "$ROOT/lib/tools.sh"
 source "$ROOT/lib/config.sh"
 source "$ROOT/lib/mcp.sh"
 source "$ROOT/lib/design-bank.sh"
+source "$ROOT/lib/transaction.sh"
 source "$ROOT/lib/install.sh"
 source "$ROOT/lib/doctor.sh"
 
@@ -20,6 +21,7 @@ Usage:
   ./install.sh --dry-run
   ./install.sh
   ./install.sh --doctor
+  ./install.sh --restore [stamp]
   ./install.sh --skip-tools
   ./install.sh --skip-design-bank
 
@@ -44,25 +46,41 @@ EOF
 }
 
 mode="install"
+restore_stamp=""
 for arg in "$@"; do
   case "$arg" in
     --dry-run) GRT_DRY_RUN=1 ;;
     --doctor) mode="doctor" ;;
+    --restore) mode="restore" ;;
     --skip-tools) GRT_SKIP_TOOLS=1 ;;
     --skip-design-bank) GRT_SKIP_DESIGN_BANK=1 ;;
     -h|--help) usage; exit 0 ;;
-    *) grt_die "Unknown argument: $arg" ;;
+    *)
+      if [[ "$mode" == "restore" && -z "$restore_stamp" && "$arg" != --* ]]; then
+        restore_stamp="$arg"
+      else
+        grt_die "Unknown argument: $arg"
+      fi
+      ;;
   esac
 done
 
 case "$mode" in
-  doctor) grt_doctor ;;
+  doctor)
+    grt_doctor || grt_die "doctor found failures"
+    ;;
+  restore)
+    grt_restore_backup "$restore_stamp"
+    ;;
   install)
     grt_run_install
     if [[ "$GRT_DRY_RUN" == 1 ]]; then
       grt_info "dry-run complete"
     else
-      grt_doctor
+      if ! grt_doctor; then
+        grt_restore_backup
+        grt_die "doctor found failures; restored backup ${GRT_BACKUP_STAMP:-latest}"
+      fi
       cat <<'EOF'
 
 Next (human only):

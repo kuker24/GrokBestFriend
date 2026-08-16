@@ -1,0 +1,163 @@
+{"id":"simple-login","prompt":"buat login sederhana","expect":"none","verify":null,"forbid":["ask-matt","adhd","grill-with-docs"]}
+{"id":"simple-crud","prompt":"tambah crud user biasa","expect":"none","verify":null,"forbid":["ask-matt","adhd"]}
+{"id":"fix-typo","prompt":"fix typo di README","expect":"none","verify":null,"forbid":["adhd","ask-matt","grill-with-docs"]}
+{"id":"simple-api-bug","prompt":"bug API sederhana di endpoint status","expect":"none","verify":null,"forbid":["ask-matt","adhd","grill-with-docs"]}
+{"id":"add-button","prompt":"tambah tombol export csv","expect":"none","verify":null,"forbid":["adhd","design"]}
+{"id":"rename-symbol","prompt":"rename helper getUser ke fetchUser","expect":"none","verify":null,"forbid":["ask-matt"]}
+{"id":"whitespace","prompt":"bersihkan whitespace di file ini","expect":"none","verify":null,"forbid":["adhd"]}
+{"id":"which-skill","prompt":"which skill harus saya pakai?","expect":"ask-matt","verify":null,"forbid":["grill-with-docs"]}
+{"id":"alur-apa","prompt":"alur apa yang benar untuk fitur ini?","expect":"ask-matt","verify":null,"forbid":["implement"]}
+{"id":"ask-matt-plain","prompt":"ask matt dulu sebelum kerja","expect":"ask-matt","verify":null,"forbid":[]}
+{"id":"skill-mana","prompt":"skill mana yang cocok?","expect":"ask-matt","verify":null,"forbid":["adhd"]}
+{"id":"slash-ask-matt","prompt":"tolong /ask-matt","expect":"ask-matt","verify":null,"forbid":[]}
+{"id":"payment-arch","prompt":"buat arsitektur payment","expect":"design","verify":"full-audit-keamanan","forbid":["grill-with-docs","implement","adhd"]}
+{"id":"system-design","prompt":"tulis system design untuk notifikasi","expect":"design","verify":null,"forbid":["grill-with-docs","implement"]}
+{"id":"design-doc","prompt":"write a design doc and PR plan DAG","expect":"design","verify":null,"forbid":["implement"]}
+{"id":"arsitektur-sistem","prompt":"arsitektur sistem billing","expect":"design","verify":null,"forbid":["ask-matt"]}
+{"id":"unknown-req","prompt":"saya belum tahu requirement fitur ini","expect":"grill-with-docs","verify":null,"forbid":["implement","ask-matt"]}
+{"id":"need-interview","prompt":"butuh wawancara dulu sebelum coding","expect":"grill-with-docs","verify":null,"forbid":["implement"]}
+{"id":"write-glossary","prompt":"write a glossary and ADR for this feature","expect":"grill-with-docs","verify":null,"forbid":["to-spec"]}
+{"id":"sharpen-plan","prompt":"sharpen the plan, masih kabur","expect":"grill-with-docs","verify":null,"forbid":["implement"]}
+{"id":"slash-grill","prompt":"jalankan /grill-with-docs","expect":"grill-with-docs","verify":null,"forbid":[]}
+{"id":"write-spec","prompt":"tulis spec dari hasil grill ini","expect":"to-spec","verify":null,"forbid":["grill-with-docs","implement"]}
+{"id":"to-spec-slash","prompt":"tolong /to-spec","expect":"to-spec","verify":null,"forbid":["grill-with-docs"]}
+{"id":"synthesize-spec","prompt":"synthesize a spec from this conversation","expect":"to-spec","verify":null,"forbid":[]}
+{"id":"break-tickets","prompt":"pecah jadi tiket tracer bullet","expect":"to-tickets","verify":null,"forbid":["implement"]}
+{"id":"to-tickets-slash","prompt":"/to-tickets please","expect":"to-tickets","verify":null,"forbid":[]}
+{"id":"buat-tiket","prompt":"buat tiket dari spec ini","expect":"to-tickets","verify":null,"forbid":["grill-with-docs"]}
+{"id":"audit-authorization","prompt":"audit authorization pada role admin","expect":"full-audit-keamanan","verify":null,"forbid":["adhd","ask-matt"]}
+{"id":"security-audit","prompt":"jalankan security audit untuk upload","expect":"full-audit-keamanan","verify":null,"forbid":["impeccable"]}
+{"id":"audit-keamanan","prompt":"audit keamanan webhook inbound","expect":"full-audit-keamanan","verify":null,"forbid":["full-performance-audit"]}
+{"id":"slash-audit","prompt":"/full-audit-keamanan","expect":"full-audit-keamanan","verify":null,"forbid":[]}
+{"id":"measured-lcp","prompt":"measured LCP regression di homepage","expect":"full-performance-audit","verify":null,"forbid":["adhd"]}
+{"id":"cls-regression","prompt":"CLS regression setelah ganti font","expect":"full-performance-audit","verify":null,"forbid":["impeccable"]}
+{"id":"slash-perf","prompt":"/full-performance-audit","expect":"full-performance-audit","verify":null,"forbid":[]}
+{"id":"padding-button","prompt":"ubah padding button primary","expect":"impeccable","verify":null,"forbid":["adhd","ask-matt"]}
+{"id":"polish-ui","prompt":"polish the ui dashboard","expect":"impeccable","verify":null,"forbid":["adhd"]}
+{"id":"redesign-page","prompt":"redesign halaman settings","expect":"impeccable","verify":null,"forbid":["found-this-design"]}
+{"id":"slash-impeccable","prompt":"/impeccable","expect":"impeccable","verify":null,"forbid":[]}
+{"id":"cari-desain","prompt":"cari desain yang cocok di design bank","expect":"found-this-design","verify":null,"forbid":["impeccable"]}
+{"id":"refero","prompt":"rekomendasi desain Refero untuk checkout","expect":"found-this-design","verify":null,"forbid":["adhd"]}
+{"id":"slash-found","prompt":"/found-this-design","expect":"found-this-design","verify":null,"forbid":[]}
+{"id":"hover-feel","prompt":"perbaiki hover feel dan easing tombol","expect":"emil-design-eng","verify":null,"forbid":["impeccable"]}
+{"id":"microinteraction","prompt":"tambah micro-interaction pada toast","expect":"emil-design-eng","verify":null,"forbid":["adhd"]}
+{"id":"product-photo","prompt":"buat product photo sepatu ini","expect":"visual-studio","verify":null,"forbid":["impeccable"]}
+{"id":"youtube-thumb","prompt":"youtube thumbnail untuk video review","expect":"visual-studio","verify":null,"forbid":["scroll-world"]}
+{"id":"scroll-scrub","prompt":"buat scroll-scrub diorama landing","expect":"scroll-world","verify":null,"forbid":["visual-studio"]}
+{"id":"3d-world","prompt":"3d world landing isometric","expect":"scroll-world","verify":null,"forbid":["impeccable"]}
+{"id":"tdd-feature","prompt":"implement this test-first with tdd","expect":"tdd","verify":null,"forbid":["implement"]}
+{"id":"red-green","prompt":"red-green-refactor untuk parser ini","expect":"tdd","verify":null,"forbid":["ask-matt"]}
+{"id":"slash-tdd","prompt":"/tdd","expect":"tdd","verify":null,"forbid":[]}
+{"id":"review-changes","prompt":"review my changes","expect":"review","verify":null,"forbid":["matt-code-review","code-review"]}
+{"id":"review-pr","prompt":"review this PR","expect":"review","verify":null,"forbid":["ask-matt"]}
+{"id":"two-axis","prompt":"two-axis Standards + Spec review","expect":"matt-code-review","verify":null,"forbid":["review"]}
+{"id":"slash-matt-review","prompt":"/matt-code-review","expect":"matt-code-review","verify":null,"forbid":[]}
+{"id":"harsh-audit","prompt":"harsh slash audit maintainability","expect":"code-review","verify":null,"forbid":["review"]}
+{"id":"run-implement","prompt":"run /implement on this ticket","expect":"implement","verify":null,"forbid":["matt-implement"]}
+{"id":"matt-loop","prompt":"jalankan matt ticket loop /matt-implement","expect":"matt-implement","verify":null,"forbid":["implement"]}
+{"id":"slash-implement","prompt":"/implement","expect":"implement","verify":null,"forbid":[]}
+{"id":"exploratory-qa","prompt":"exploratory QA multi-role browser","expect":"browser-act","verify":null,"forbid":["chrome-devtools-axi"]}
+{"id":"slash-browser-act","prompt":"/browser-act","expect":"browser-act","verify":null,"forbid":[]}
+{"id":"console-error","prompt":"observed click bug, cek console error","expect":"chrome-devtools-axi","verify":null,"forbid":["browser-act"]}
+{"id":"network-tab","prompt":"network tab gagal di checkout","expect":"chrome-devtools-axi","verify":null,"forbid":[]}
+{"id":"github-issue","prompt":"buat GitHub issue untuk bug ini","expect":"gh-axi","verify":null,"forbid":["to-tickets"]}
+{"id":"create-pr","prompt":"create a PR from this branch","expect":"gh-axi","verify":null,"forbid":["implement"]}
+{"id":"slash-gh","prompt":"/gh-axi list issues","expect":"gh-axi","verify":null,"forbid":[]}
+{"id":"brainstorm","prompt":"brainstorm alternatives and trap detection","expect":"adhd","verify":null,"forbid":["ask-matt"]}
+{"id":"fuzzy-arch","prompt":"fuzzy architecture options for sync","expect":"adhd","verify":null,"forbid":["design"]}
+{"id":"jangan-adhd","prompt":"ubah padding button, jangan ADHD","expect":"impeccable","verify":null,"forbid":["adhd"]}
+{"id":"oauth-implement","prompt":"implement oauth login","expect":"none","verify":"full-audit-keamanan","forbid":["ask-matt","adhd"]}
+{"id":"jwt-feature","prompt":"tambah jwt refresh token","expect":"none","verify":"full-audit-keamanan","forbid":["grill-with-docs"]}
+{"id":"webhook-handler","prompt":"buat webhook handler stripe payment","expect":"none","verify":"full-audit-keamanan","forbid":["ask-matt"]}
+{"id":"file-upload","prompt":"tambah file upload ke S3","expect":"none","verify":"full-audit-keamanan","forbid":["adhd"]}
+{"id":"rbac-admin","prompt":"tambah RBAC untuk admin","expect":"none","verify":"full-audit-keamanan","forbid":[]}
+{"id":"implement-payment","prompt":"run /implement payment checkout","expect":"implement","verify":"full-audit-keamanan","forbid":[]}
+{"id":"tdd-oauth","prompt":"tdd for oauth callback","expect":"tdd","verify":"full-audit-keamanan","forbid":[]}
+{"id":"design-webhook","prompt":"architecture for inbound webhook","expect":"design","verify":"full-audit-keamanan","forbid":["grill-with-docs"]}
+{"id":"fix-lcp-code","prompt":"perbaiki measured latency regression di query","expect":"none","verify":"full-performance-audit","forbid":["adhd"]}
+{"id":"implement-bundle","prompt":"run /implement to cut bundle size","expect":"implement","verify":"full-performance-audit","forbid":[]}
+{"id":"ordinary-form","prompt":"buat form kontak biasa","expect":"none","verify":null,"forbid":["impeccable","ask-matt"]}
+{"id":"known-bug","prompt":"fix bug null pointer di parser, penyebab sudah jelas","expect":"none","verify":null,"forbid":["adhd","grill-with-docs"]}
+{"id":"slash-execute-plan","prompt":"setelah design disetujui, /execute-plan","expect":"execute-plan","verify":null,"forbid":["implement"]}
+{"id":"slash-create-skill","prompt":"/create-skill untuk helper internal","expect":"create-skill","verify":null,"forbid":[]}
+{"id":"which-workflow","prompt":"which workflow should I run?","expect":"ask-matt","verify":null,"forbid":["implement"]}
+{"id":"requirements-unclear","prompt":"requirements unclear, masih banyak asumsi","expect":"grill-with-docs","verify":null,"forbid":["to-spec"]}
+{"id":"write-the-spec","prompt":"write the spec now, no more interview","expect":"to-spec","verify":null,"forbid":["grill-with-docs"]}
+{"id":"break-into-tickets","prompt":"break it into tickets after the spec","expect":"to-tickets","verify":null,"forbid":["implement"]}
+{"id":"audit-oauth","prompt":"audit oauth redirect and session cookies","expect":"full-audit-keamanan","verify":null,"forbid":["implement"]}
+{"id":"inp-regression","prompt":"INP regression on search box","expect":"full-performance-audit","verify":null,"forbid":["emil-design-eng"]}
+{"id":"visual-hierarchy","prompt":"rapikan visual hierarchy halaman harga","expect":"impeccable","verify":null,"forbid":["found-this-design"]}
+{"id":"pilih-arah-visual","prompt":"pilih arah visual dari Motionsites","expect":"found-this-design","verify":null,"forbid":[]}
+{"id":"studio-shot","prompt":"studio shot produk botol kaca","expect":"visual-studio","verify":null,"forbid":[]}
+{"id":"ugc-video","prompt":"UGC video unboxing produk","expect":"visual-studio","verify":null,"forbid":["scroll-world"]}
+{"id":"divergent-options","prompt":"divergent options for schema, trap detection","expect":"adhd","verify":null,"forbid":["grill-with-docs"]}
+{"id":"github-actions","prompt":"cek GitHub Actions yang merah","expect":"gh-axi","verify":null,"forbid":["implement"]}
+{"id":"multi-role-qa","prompt":"multi-role browser QA login vs admin","expect":"browser-act","verify":null,"forbid":[]}
+{"id":"observed-browser","prompt":"observed browser issue after click submit","expect":"chrome-devtools-axi","verify":null,"forbid":["browser-act"]}
+{"id":"simple-login-id","prompt":"bikin login sederhana tanpa oauth","expect":"none","verify":null,"forbid":["full-audit-keamanan","ask-matt"]}
+{"id":"public-api-add","prompt":"expose public API for orders","expect":"none","verify":"full-audit-keamanan","forbid":["ask-matt"]}
+{"id":"privileged-admin","prompt":"tambah privileged impersonate user","expect":"none","verify":"full-audit-keamanan","forbid":[]}
+{"id":"secrets-rotation","prompt":"tambah secrets rotation untuk token","expect":"none","verify":"full-audit-keamanan","forbid":[]}
+{"id":"architecture-oauth","prompt":"architecture for oauth multi-tenant","expect":"design","verify":"full-audit-keamanan","forbid":["adhd"]}
+{"id":"tdd-payment","prompt":"tdd payment refund path","expect":"tdd","verify":"full-audit-keamanan","forbid":[]}
+{"id":"ordinary-list","prompt":"tampilkan daftar produk dari API yang sudah ada","expect":"none","verify":null,"forbid":["design","grill-with-docs"]}
+{"id":"slash-review","prompt":"/review","expect":"review","verify":null,"forbid":["matt-code-review"]}
+{"id":"slash-code-review","prompt":"/code-review","expect":"code-review","verify":null,"forbid":["review"]}
+{"id":"feature-needs-plan","prompt":"feature still needs a plan and ADRs","expect":"grill-with-docs","verify":null,"forbid":["design"]}
+{"id":"pr-plan-only","prompt":"write the architecture PR-plan only","expect":"design","verify":null,"forbid":["grill-with-docs"]}
+{"id":"jangan-ask-matt","prompt":"fix typo, jangan ask matt","expect":"none","verify":null,"forbid":["ask-matt"]}
+{"id":"measured-bundle","prompt":"ukur bundle size regression di checkout js","expect":"full-performance-audit","verify":null,"forbid":[]}
+{"id":"landing-page-ui","prompt":"landing page ui masih berantakan, polish the page","expect":"impeccable","verify":null,"forbid":["scroll-world"]}
+{"id":"cinematic-vfx","prompt":"cinematic vfx shot untuk iklan","expect":"visual-studio","verify":null,"forbid":["impeccable"]}
+{"id":"isometric-world","prompt":"isometric world scroll landing","expect":"scroll-world","verify":null,"forbid":[]}
+{"id":"create-pr-actions","prompt":"buat GitHub release notes","expect":"gh-axi","verify":null,"forbid":[]}
+{"id":"fuzzy-debug","prompt":"fuzzy debug kenapa race ini muncul, beberapa teori","expect":"adhd","verify":null,"forbid":["none"]}
+{"id":"simple-query","prompt":"fix bug query filter sederhana","expect":"none","verify":null,"forbid":["full-performance-audit","adhd"]}
+{"id":"implement-upload","prompt":"/implement file upload antivirus hook","expect":"implement","verify":"full-audit-keamanan","forbid":[]}
+{"id":"alur-mana","prompt":"alur mana yang harus diambil?","expect":"ask-matt","verify":null,"forbid":[]}
+{"id":"jadikan-spec","prompt":"jadikan spec percakapan ini","expect":"to-spec","verify":null,"forbid":[]}
+{"id":"tracer-tickets","prompt":"tracer-bullet tickets dari spec","expect":"to-tickets","verify":null,"forbid":[]}
+{"id":"audit-payment","prompt":"audit payment capture and refund","expect":"full-audit-keamanan","verify":null,"forbid":[]}
+{"id":"ubah-warna","prompt":"ubah warna primary button biar lebih kontras","expect":"impeccable","verify":null,"forbid":["adhd"]}
+{"id":"preview-desain","prompt":"preview desain 5 opsi dari design bank","expect":"found-this-design","verify":null,"forbid":[]}
+{"id":"interaction-feel","prompt":"interaction feel saat buka drawer masih kaku","expect":"emil-design-eng","verify":null,"forbid":[]}
+{"id":"slash-visual-studio","prompt":"/visual-studio","expect":"visual-studio","verify":null,"forbid":[]}
+{"id":"slash-scroll","prompt":"/scroll-world","expect":"scroll-world","verify":null,"forbid":[]}
+{"id":"slash-emil","prompt":"/emil-design-eng","expect":"emil-design-eng","verify":null,"forbid":[]}
+{"id":"slash-adhd","prompt":"/adhd","expect":"adhd","verify":null,"forbid":[]}
+{"id":"ordinary-test-fix","prompt":"perbaiki assertion yang flaky di unit test sederhana","expect":"none","verify":null,"forbid":["tdd","adhd"]}
+{"id":"known-cause-api","prompt":"bug API 500 karena null id, sudah ketahuan","expect":"none","verify":null,"forbid":["adhd","grill-with-docs"]}
+{"id":"add-secrets-header","prompt":"tambah secrets header ke internal job","expect":"none","verify":"full-audit-keamanan","forbid":[]}
+{"id":"design-public-api","prompt":"system design for a public API gateway","expect":"design","verify":"full-audit-keamanan","forbid":[]}
+{"id":"which-skill-id","prompt":"which skill untuk polish UI?","expect":"ask-matt","verify":null,"forbid":["impeccable"]}
+{"id":"belum-tau-req","prompt":"belum tau requirement checkout","expect":"grill-with-docs","verify":null,"forbid":["implement"]}
+{"id":"execute-after-design","prompt":"/execute-plan","expect":"execute-plan","verify":null,"forbid":["design"]}
+{"id":"review-diff","prompt":"review the diff before merge","expect":"review","verify":null,"forbid":[]}
+{"id":"standards-spec","prompt":"matt-code-review dua axis","expect":"matt-code-review","verify":null,"forbid":[]}
+{"id":"simple-padding-en","prompt":"change button padding only","expect":"impeccable","verify":null,"forbid":["adhd"]}
+{"id":"open-ended-forks","prompt":"open-ended design forks, trap detection please","expect":"adhd","verify":null,"forbid":["design"]}
+{"id":"browser-act-name","prompt":"pakai browser-act untuk QA","expect":"browser-act","verify":null,"forbid":[]}
+{"id":"chrome-devtools-name","prompt":"pakai chrome-devtools setelah liat bug klik","expect":"chrome-devtools-axi","verify":null,"forbid":[]}
+{"id":"gh-axi-name","prompt":"pakai gh-axi untuk list PR","expect":"gh-axi","verify":null,"forbid":[]}
+{"id":"jwt-arch","prompt":"arsitektur jwt session store","expect":"design","verify":"full-audit-keamanan","forbid":[]}
+{"id":"stripe-feature","prompt":"tambah stripe checkout session","expect":"none","verify":"full-audit-keamanan","forbid":["design"]}
+{"id":"cls-measured","prompt":"measured CLS regression after hero image","expect":"full-performance-audit","verify":null,"forbid":[]}
+{"id":"query-regression-code","prompt":"perbaiki query regression yang sudah diukur","expect":"none","verify":"full-performance-audit","forbid":[]}
+{"id":"ordinary-readme","prompt":"update README install steps","expect":"none","verify":null,"forbid":["ask-matt","grill-with-docs","adhd"]}
+{"id":"slash-to-spec-id","prompt":"tolong /to-spec tanpa tanya lagi","expect":"to-spec","verify":null,"forbid":[]}
+{"id":"slash-to-tickets-id","prompt":"langsung /to-tickets","expect":"to-tickets","verify":null,"forbid":[]}
+{"id":"need-interview-en","prompt":"need an interview before we lock scope","expect":"grill-with-docs","verify":null,"forbid":[]}
+{"id":"write-glossary-only","prompt":"tulis glossary domain dulu","expect":"grill-with-docs","verify":null,"forbid":["to-spec"]}
+{"id":"pilih-skill","prompt":"pilih skill yang tepat dulu","expect":"ask-matt","verify":null,"forbid":[]}
+{"id":"technical-architecture","prompt":"technical architecture for offline sync","expect":"design","verify":null,"forbid":["adhd"]}
+{"id":"simple-export","prompt":"export csv sederhana dari tabel yang ada","expect":"none","verify":null,"forbid":["design"]}
+{"id":"upload-audit","prompt":"audit upload path and content-type checks","expect":"full-audit-keamanan","verify":null,"forbid":[]}
+{"id":"webhook-audit","prompt":"audit webhook signature verification","expect":"full-audit-keamanan","verify":null,"forbid":[]}
+{"id":"lcp-slash","prompt":"LCP regression, jalankan /full-performance-audit","expect":"full-performance-audit","verify":null,"forbid":[]}
+{"id":"do-not-use-adhd","prompt":"fix typo, do not use /adhd","expect":"none","verify":null,"forbid":["adhd"]}
+{"id":"product-still","prompt":"product still untuk marketplace","expect":"visual-studio","verify":null,"forbid":[]}
+{"id":"scroll-world-id","prompt":"scroll world cinematic page","expect":"scroll-world","verify":null,"forbid":[]}
+{"id":"motion-only","prompt":"motion pada sheet close masih patah","expect":"emil-design-eng","verify":null,"forbid":["impeccable"]}
+{"id":"found-underscore","prompt":"/found_this_design","expect":"found-this-design","verify":null,"forbid":[]}
+{"id":"implement-secrets","prompt":"run /implement secrets encryption at rest","expect":"implement","verify":"full-audit-keamanan","forbid":[]}
+{"id":"none-public-docs","prompt":"tulis komentar fungsi helper sederhana","expect":"none","verify":null,"forbid":["ask-matt","adhd","design"]}

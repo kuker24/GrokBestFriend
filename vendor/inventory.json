@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "capturedAt": "2026-08-16",
+  "productVersion": "1.1.0",
   "host": "linux-x86_64",
   "grokVersionSeen": "1.0.4",
   "pluginsInstalled": [],

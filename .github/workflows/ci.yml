@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Shell syntax
+        run: |
+          set -euo pipefail
+          bash -n install.sh uninstall.sh restore.sh
+          bash -n lib/*.sh scripts/*.sh tests/*.sh
+      - name: Overlay tests
+        run: python3 tests/test-overlay.py
+      - name: Doctor dry-run
+        run: ./tests/test-doctor-dry-run.sh
+      - name: Secret patterns
+        run: ./tests/test-no-secrets.sh
+      - name: MCP policy fixtures
+        run: python3 tests/test-mcp-state.py
+      - name: Routing eval
+        run: python3 tests/test-routing-eval.py
+      - name: Source integrity
+        run: ./tests/test-source-integrity.sh
+      - name: Snapshot allowlist
+        run: ./tests/test-snapshot-allowlist.sh
+      - name: Transactional install
+        run: ./tests/test-install-transaction.sh

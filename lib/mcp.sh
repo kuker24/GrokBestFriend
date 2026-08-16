@@ -1,25 +1,42 @@
 #!/usr/bin/env bash
 
-grt_mcp_has() {
+grt_mcp_list_json() {
+  "$GRT_GROK" mcp list --json
+}
+
+grt_mcp_assert() {
+  local require_disabled=()
+  local arg
+  for arg in "$@"; do
+    require_disabled+=(--require-disabled "$arg")
+  done
+  local list_json
+  list_json="$(grt_mcp_list_json)" || grt_die "grok mcp list --json failed"
+  printf '%s\n' "$list_json" | python3 "$GRT_ROOT/lib/mcp_state.py" \
+    --policy "$GRT_VENDOR/mcp-policy.json" \
+    --memory-bin "$GRT_CODEBASE_MEMORY_BIN" \
+    --serena-bin "$(command -v serena 2>/dev/null || true)" \
+    "${require_disabled[@]}"
+}
+
+grt_mcp_add_stdio() {
   local name="$1"
-  "$GRT_GROK" mcp list --json 2>/dev/null | python3 - "$name" <<'PY'
-import json, sys
-name = sys.argv[1]
-raw = sys.stdin.read().strip()
-try:
-    data = json.loads(raw) if raw else {}
-except json.JSONDecodeError:
-    raise SystemExit(1)
-servers = data if isinstance(data, list) else data.get("servers") or data.get("mcp_servers") or []
-if isinstance(servers, dict):
-    items = [{"name": k, **(v if isinstance(v, dict) else {})} for k, v in servers.items()]
-else:
-    items = servers
-for item in items:
-    if isinstance(item, dict) and (item.get("name") or item.get("id")) == name:
-        raise SystemExit(0)
-raise SystemExit(1)
-PY
+  shift
+  grt_info "MCP add $name (stdio)"
+  "$GRT_GROK" mcp add --scope user "$name" -- "$@"
+}
+
+grt_mcp_add_http() {
+  local name="$1" url="$2"
+  grt_info "MCP add $name (http)"
+  "$GRT_GROK" mcp add --transport http --scope user "$name" "$url"
+}
+
+grt_mcp_disable_strict() {
+  local name="$1"
+  grt_info "MCP disable $name"
+  "$GRT_GROK" mcp disable "$name"
+  grt_mcp_assert "$name"
 }
 
 grt_install_mcp() {
@@ -34,6 +51,7 @@ grt_install_mcp() {
     grt_info "WOULD_MCP serena -- $serena_bin start-mcp-server --context agent --project-from-cwd --open-web-dashboard false"
     grt_info "WOULD_MCP disable serena"
     grt_info "WOULD_MCP disable exa"
+    grt_info "WOULD_MCP assert policy"
     return 0
   fi
 
@@ -41,13 +59,16 @@ grt_install_mcp() {
   grt_have serena || grt_die "serena is not on PATH"
   serena_bin="$(command -v serena)"
 
-  "$GRT_GROK" mcp add codebase-memory-mcp -- "$GRT_CODEBASE_MEMORY_BIN" || true
-  "$GRT_GROK" mcp add --transport http --scope user context7 https://mcp.context7.com/mcp || true
-  "$GRT_GROK" mcp add --transport http --scope user exa https://mcp.exa.ai/mcp || true
-  "$GRT_GROK" mcp add serena -- "$serena_bin" start-mcp-server --context agent --project-from-cwd --open-web-dashboard false || true
-  "$GRT_GROK" mcp disable serena || true
-  "$GRT_GROK" mcp disable exa || true
+  grt_mcp_add_stdio codebase-memory-mcp "$GRT_CODEBASE_MEMORY_BIN"
+  grt_mcp_add_http context7 "https://mcp.context7.com/mcp"
+  grt_mcp_add_http exa "https://mcp.exa.ai/mcp"
+  grt_mcp_add_stdio serena "$serena_bin" start-mcp-server --context agent --project-from-cwd --open-web-dashboard false
   grt_rewrite_mcp_paths "$serena_bin"
+  grt_info "MCP disable serena"
+  "$GRT_GROK" mcp disable serena
+  grt_info "MCP disable exa"
+  "$GRT_GROK" mcp disable exa
+  grt_mcp_assert serena exa
 }
 
 grt_rewrite_mcp_paths() {

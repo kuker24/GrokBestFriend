@@ -22,6 +22,19 @@ PY
   [[ -x "$HOME/.grok/bin/grok" ]] || grt_have grok || grt_die "grok install finished but binary is missing"
 }
 
+grt_require_grok_version() {
+  local wanted output
+  wanted="$(grt_grok_seen_version)"
+  [[ -n "$wanted" ]] || return 0
+  if [[ "$GRT_DRY_RUN" == 1 ]]; then
+    grt_info "WOULD_CHECK_GROK_VERSION $wanted"
+    return 0
+  fi
+  grt_find_grok
+  output="$("$GRT_GROK" --version 2>/dev/null || true)"
+  grt_version_contains "$output" "$wanted" || grt_die "grok version mismatch: wanted $wanted, got $output"
+}
+
 grt_ensure_path() {
   local extra="$HOME/.grok/bin:$HOME/.local/bin"
   case ":$PATH:" in

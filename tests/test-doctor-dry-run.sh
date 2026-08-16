@@ -67,4 +67,5 @@ else:
 if failed:
     raise SystemExit(1)
 PY
+python3 "$ROOT/lib/validate_skills.py" --skills "$ROOT/vendor/skills" --routing "$ROOT/vendor/rules/00-routing.md"
 python3 tests/test-overlay.py

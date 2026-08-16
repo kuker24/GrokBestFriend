@@ -1,6 +1,6 @@
 # GrokBuild specialist routing
 
-Use tools lazily. Prefer current repository evidence before external tools. Use one primary specialist per problem. Availability is not a reason to activate a tool.
+Use tools lazily. Prefer current repository evidence before external tools. Use one primary specialist per problem. If a risk trigger is active (auth, authorization, secrets, public APIs, payment, upload, webhook, privileged operations), also load at most one verification specialist (`/full-audit-keamanan`). If the concern is a measured performance regression (LCP, INP, CLS, latency, bundle, query, memory), the verification specialist is `/full-performance-audit`. Do not load a second implementation specialist. Availability is not a reason to activate a tool.
 
 ```text
 pikir dulu → bukti di repo → satu spesialis → cek hasil
@@ -73,6 +73,7 @@ Follow this tree here. Do not load `/ask-matt` unless the user is choosing a wor
 - Do not install a marketplace plugin from a session unless the user asked for that vendor and the current repo uses it. If a plugin is trusted, add it to this section in the same change.
 - User MCP: `codebase-memory-mcp` and `context7` on; `serena` and `exa` off until a human enables them.
 - `tasks` and `voice` are built-in Grok connectors, not user MCP. Use `tasks` only for scheduled automations the user asked for; `voice` only when they ask about TTS voices.
+- Local learning events live in `~/.grok/runtime/learning/events.jsonl`. They are evidence for humans. Never auto-edit rules or skills from that log. Promotion path is eval + tests + doctor.
 
 ## Do not
 

@@ -1,0 +1,18 @@
+{
+  "servers": [
+    {
+      "name": "codebase-memory-mcp",
+      "transport": "stdio",
+      "target": "/home/user/.grok/runtime/components/codebase-memory/bin/codebase-memory-mcp",
+      "healthy": true
+    },
+    {
+      "name": "context7",
+      "transport": "http",
+      "target": "https://mcp.context7.com/mcp",
+      "healthy": true
+    }
+  ],
+  "healthy_count": 2,
+  "failing_count": 0
+}

@@ -47,7 +47,9 @@ grok mcp list
 grok plugin list
 ```
 
-Expected MCP: `codebase-memory-mcp` and `context7` enabled; `serena` and `exa` disabled. Plugin list empty.
+Expected MCP: `codebase-memory-mcp` and `context7` enabled **and healthy**; `serena` and `exa` registered but disabled. Plugin list empty. Doctor fails if a required server is missing, disabled, on the wrong URL/command, or unhealthy.
+
+If install fails after the swap, the installer restores the previous owned skills/rules/hooks automatically. Manual rollback: `./restore.sh`.
 
 ## 5. Optional surfaces
 

@@ -1,0 +1,9 @@
+[
+  {
+    "command": "/home/user/.grok/runtime/components/codebase-memory/bin/codebase-memory-mcp",
+    "args": [],
+    "enabled": true,
+    "name": "codebase-memory-mcp",
+    "scope": "user"
+  }
+]

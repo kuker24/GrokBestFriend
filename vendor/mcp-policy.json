@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "servers": {
+    "codebase-memory-mcp": {
+      "enabled": true,
+      "transport": "stdio",
+      "command": "codebase-memory-bin"
+    },
+    "context7": {
+      "enabled": true,
+      "transport": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "exa": {
+      "enabled": false,
+      "transport": "http",
+      "url": "https://mcp.exa.ai/mcp"
+    },
+    "serena": {
+      "enabled": false,
+      "transport": "stdio",
+      "args": [
+        "start-mcp-server",
+        "--context",
+        "agent",
+        "--project-from-cwd",
+        "--open-web-dashboard",
+        "false"
+      ]
+    }
+  }
+}

@@ -24,3 +24,10 @@ id_ed25519
 
 # Test scratch
 /tmp-gbf-*
+
+# Local planning output from /to-spec and /to-tickets
+.scratch/
+
+# Python bytecode
+__pycache__/
+*.py[cod]

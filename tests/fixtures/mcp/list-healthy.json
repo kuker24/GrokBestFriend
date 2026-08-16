@@ -1,0 +1,35 @@
+[
+  {
+    "command": "/home/user/.grok/runtime/components/codebase-memory/bin/codebase-memory-mcp",
+    "args": [],
+    "enabled": true,
+    "name": "codebase-memory-mcp",
+    "scope": "user"
+  },
+  {
+    "url": "https://mcp.context7.com/mcp",
+    "enabled": true,
+    "name": "context7",
+    "scope": "user"
+  },
+  {
+    "url": "https://mcp.exa.ai/mcp",
+    "enabled": false,
+    "name": "exa",
+    "scope": "user"
+  },
+  {
+    "command": "/home/user/.local/bin/serena",
+    "args": [
+      "start-mcp-server",
+      "--context",
+      "agent",
+      "--project-from-cwd",
+      "--open-web-dashboard",
+      "false"
+    ],
+    "enabled": false,
+    "name": "serena",
+    "scope": "user"
+  }
+]

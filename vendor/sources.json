@@ -1,7 +1,12 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-15",
-  "snapshot": "GrokBestFriend 1.0.0",
+  "generatedAt": "2026-08-16",
+  "snapshot": "GrokBestFriend 1.1.0",
+  "compatibility": {
+    "product": "1.1.0",
+    "grok": "1.0.4",
+    "note": "Grok CLI and uv still install from official mutable scripts. The installer verifies the resulting binary version, not the script checksum."
+  },
   "grok": {
     "seenVersion": "1.0.4",
     "installUrl": "https://x.ai/cli/install.sh"
@@ -44,7 +49,8 @@
       "artifactSha256": "15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0"
     },
     "uv": {
-      "installUrl": "https://astral.sh/uv/install.sh"
+      "installUrl": "https://astral.sh/uv/install.sh",
+      "version": "0.11.29"
     },
     "design-bank": {
       "version": "1.0.0",

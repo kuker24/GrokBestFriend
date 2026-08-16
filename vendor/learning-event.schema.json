@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GrokBestFriend learning event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts", "prompt_sha256", "primary", "verify", "verification", "passed"],
+  "properties": {
+    "ts": { "type": "string" },
+    "cwd_sha256": { "type": "string" },
+    "prompt_sha256": { "type": "string" },
+    "primary": { "type": ["string", "null"] },
+    "verify": { "type": ["string", "null"] },
+    "tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fail_stage": { "type": ["string", "null"] },
+    "retries": { "type": "integer", "minimum": 0 },
+    "verification": { "type": "string" },
+    "passed": { "type": "boolean" },
+    "user_correction": { "type": ["string", "null"] }
+  }
+}
