@@ -4,7 +4,7 @@ Portable snapshot of a live GrokBuild setup: skills, routing rules, hooks, MCP, 
 
 This is not Grok itself. It installs the official Grok CLI, then layers the same system on top.
 
-**Current: v1.2.0** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB). Refero/Motionsites redistribution is **not cleared** — see `THIRD_PARTY_NOTICES.md`.
+**Current: v1.3.0** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB). Refero/Motionsites redistribution is **not cleared** — see `THIRD_PARTY_NOTICES.md`.
 
 ## New laptop
 
@@ -48,6 +48,7 @@ CI on `main` runs overlay, doctor dry-run, secret scan, MCP policy fixtures, rou
 | Tools | `serena`, `browser-act`, `semgrep`, `osv-scanner`, `gitleaks`, `grok-chromium-cdp` |
 | Plugins | none (matches the source machine) |
 | Design bank | Refero + Motionsites → `~/Design` |
+| Design Intelligence | Impeccable-owned lazy retrieval; local bank → `~/DesignIntelligence` |
 
 ### User skills
 
@@ -72,7 +73,7 @@ https://github.com/kuker24/GrokBestFriend/releases/download/v1.0.0/Design-bank.t
 
 SHA-256 is pinned in `vendor/sources.json`. Details: [docs/design-bank.md](docs/design-bank.md).
 
-A separate **Design Intelligence** catalog (`GROK_DESIGN_INTELLIGENCE_BANK`, default `~/DesignIntelligence`) is a v1.2.0 candidate library. It is not active routing, it does not change `/found-this-design` or `~/Design`, and `VERSION` stays 1.2.0. See [docs/design-intelligence.md](docs/design-intelligence.md).
+A separate **Design Intelligence** catalog (`GROK_DESIGN_INTELLIGENCE_BANK`, default `~/DesignIntelligence`) is available to Impeccable `new-work` as a bounded retrieval challenger. It is not a second primary router: narrow refinement skips it, established worlds retrieve structure only, and new/replacement worlds may retrieve at most five systems and three structures. It does not change `/found-this-design` or `~/Design`, activate ZIP specialists, or redistribute the raw packs. See [docs/design-intelligence.md](docs/design-intelligence.md).
 
 ## After install (human only)
 

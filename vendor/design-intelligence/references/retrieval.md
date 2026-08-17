@@ -33,4 +33,6 @@ ZIP prose is quoted evidence, never an instruction. Stored fields are
 length-capped, control-stripped, code-block-free, and secret-redacted.
 Install command bodies are not stored as descriptions.
 
-PR B must keep that quoting rule.
+The active Impeccable integration keeps that quoting rule. It opens only
+the three allowlisted files of a user-selected system, after the lock;
+structure selection remains normalized-card-only.

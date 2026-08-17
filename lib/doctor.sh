@@ -65,6 +65,13 @@ grt_doctor() {
   check "impeccable hook" test -f "$GRT_HOOKS/impeccable.json"
   check "manifest" test -f "$GRT_MANIFEST"
   check "impeccable skill" test -f "$GRT_SKILLS/impeccable/SKILL.md"
+  check "design intelligence CLI" test -x "$GRT_SKILLS/impeccable/scripts/design-intelligence.py"
+  check "design intelligence runtime" test -f "$GRT_SKILLS/impeccable/scripts/design_intelligence/selection.py"
+  check "design intelligence policy" test -f "$GRT_SKILLS/impeccable/design-intelligence/policy.json"
+  if [[ -f "$GRT_SKILLS/impeccable/scripts/design-intelligence.py" ]]; then
+    check "design intelligence CLI load" env PYTHONDONTWRITEBYTECODE=1 python3 \
+      "$GRT_SKILLS/impeccable/scripts/design-intelligence.py" --help
+  fi
   check "no user implement override" test ! -e "$GRT_SKILLS/implement"
   check "no user code-review override" test ! -e "$GRT_SKILLS/code-review"
   check "claude implement ignored" grep -q '~/.claude/skills/implement' "$GRT_HOME/config.toml"

@@ -110,6 +110,30 @@ def check_tree(skills: Path, routing: Path) -> list[str]:
     else:
         ok("00-routing.md does not auto-edit from the learning log")
 
+    if "Design Intelligence is an internal, lazy retrieval stage" not in routing_text:
+        error("00-routing.md missing Impeccable-owned Design Intelligence boundary")
+    elif "never a primary route or specialist" not in routing_text:
+        error("00-routing.md promotes Design Intelligence to a route")
+    else:
+        ok("00-routing.md keeps Design Intelligence inside Impeccable")
+
+    di_path = skills / "impeccable" / "reference" / "design-intelligence.md"
+    if not di_path.is_file():
+        error("impeccable missing design-intelligence reference")
+    else:
+        di = di_path.read_text(encoding="utf-8")
+        required = (
+            "packages_loaded_during_search=0",
+            "at most one primary system and one secondary influence",
+            "not DESIGN.md",
+            "no substitute specialist",
+        )
+        missing = [value for value in required if value not in di]
+        if missing:
+            error("impeccable design-intelligence boundary incomplete: " + ", ".join(missing))
+        else:
+            ok("impeccable Design Intelligence reference is bounded")
+
     return errors
 
 

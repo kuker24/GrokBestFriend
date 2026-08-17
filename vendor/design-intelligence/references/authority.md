@@ -1,6 +1,7 @@
 # Authority model
 
-PR A stores and tests this ladder. It does not change Impeccable.
+The catalog stores and tests this ladder. Impeccable `new-work` applies it
+when bank evidence enters a direction round.
 
 Higher rank wins. A lower source cannot overwrite a higher one.
 
@@ -43,11 +44,12 @@ The old look is evidence and anti-reference, not automatic authority.
 - Accessibility violations
 - Skipping platform constraints
 
-Future selection file (PR B, not written here):
+User-locked selection provenance:
 
 ```text
 .impeccable/design-intelligence-selection.json
 ```
 
-That file is not a `DESIGN.md`. Greenfield and redesign still write
-`DESIGN.md` after build and finish review.
+That file stores ids, content hashes, and authority flags—not local-only
+source prose—and is not a `DESIGN.md`. Greenfield and redesign still
+write `DESIGN.md` after build and finish review.
