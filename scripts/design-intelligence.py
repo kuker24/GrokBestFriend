@@ -18,6 +18,7 @@ if not (LIB_ROOT / "design_intelligence").is_dir():
 sys.path.insert(0, str(LIB_ROOT))
 
 from design_intelligence import archive as archive_mod  # noqa: E402
+from design_intelligence import bootstrap as bootstrap_mod  # noqa: E402
 from design_intelligence import catalog  # noqa: E402
 from design_intelligence import doctor as doctor_mod  # noqa: E402
 from design_intelligence import integration  # noqa: E402
@@ -188,6 +189,20 @@ def cmd_pin_selection(args: argparse.Namespace) -> int:
     )
 
 
+def cmd_bootstrap(args: argparse.Namespace) -> int:
+    payload = bootstrap_mod.bootstrap(
+        archive_dir=args.archive_dir or "",
+        target=Path(args.target).expanduser() if args.target else None,
+        home=Path(args.home).expanduser() if args.home else None,
+        grok_home=Path(args.grok_home).expanduser() if args.grok_home else None,
+        transaction_id=args.transaction_id,
+        dry_run=args.dry_run,
+        phase=args.phase,
+        staging=Path(args.staging).expanduser() if args.staging else None,
+    )
+    return emit(payload)
+
+
 def cmd_validate_selection(args: argparse.Namespace) -> int:
     policy = policy_mod.load_policy()
     bank = catalog.resolve_bank(args.bank)
@@ -266,6 +281,34 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_p.add_argument("--expected-sha", action="append", default=[])
     doctor_p.add_argument("--claimed-snapshot")
     doctor_p.set_defaults(func=cmd_doctor)
+
+    boot_p = sub.add_parser(
+        "bootstrap",
+        help="installer-only transactional local-pack bank import",
+    )
+    boot_p.add_argument(
+        "--phase",
+        required=True,
+        choices=[
+            "all",
+            "preflight",
+            "stage",
+            "promote",
+            "verify-search",
+            "existing",
+            "doctor-status",
+            "remove-staging",
+            "recover-created",
+        ],
+    )
+    boot_p.add_argument("--archive-dir")
+    boot_p.add_argument("--target")
+    boot_p.add_argument("--staging")
+    boot_p.add_argument("--home")
+    boot_p.add_argument("--grok-home")
+    boot_p.add_argument("--transaction-id")
+    boot_p.add_argument("--dry-run", action="store_true")
+    boot_p.set_defaults(func=cmd_bootstrap)
     return parser
 
 
@@ -274,6 +317,9 @@ def main() -> int:
     args = parser.parse_args()
     try:
         return int(args.func(args))
+    except bootstrap_mod.BootstrapError as exc:
+        print(json.dumps({"status": "BLOCKED", "error": exc.code, "detail": exc.detail}, indent=2), file=sys.stderr)
+        return 2
     except (selection.SelectionError, catalog.CatalogError, ValueError) as exc:
         print(json.dumps({"status": "BLOCKED", "error": str(exc)}, indent=2), file=sys.stderr)
         return 2

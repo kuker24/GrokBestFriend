@@ -71,4 +71,6 @@ jobs:
           python3 tests/test-design-intelligence-integration.py
           python3 tests/test-design-intelligence-selection.py
           python3 tests/test-design-intelligence-doctor.py
+          python3 tests/test-design-intelligence-bootstrap.py
           python3 tests/test-design-intelligence-optional-audit.py
+          ./tests/test-design-intelligence-bank-install.sh

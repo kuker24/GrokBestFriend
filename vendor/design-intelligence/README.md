@@ -1,6 +1,6 @@
 # Design Intelligence
 
-Local reference engine for GrokBestFriend 1.3.0. **Not an independent
+Local reference engine for GrokBestFriend 1.3.1. **Not an independent
 router or skill.** Impeccable `new-work` owns its bounded retrieval stage.
 
 This tree is policy, taxonomy, and schemas. The indexer lives in

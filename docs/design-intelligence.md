@@ -1,10 +1,10 @@
 # Design Intelligence
 
-Local catalog and Impeccable retrieval engine for GrokBestFriend **1.3.0**.
+Local catalog and Impeccable retrieval engine for GrokBestFriend **1.3.1**.
 It is not an independent skill or a second primary router.
 
 ```text
-active_version          = 1.3.0
+active_version          = 1.3.1
 feature                 = IMPECCABLE_DESIGN_INTELLIGENCE
 routing_integration     = IMPECCABLE_NEW_WORK_ONLY
 specialist_activation   = NOT_ACTIVE
@@ -24,14 +24,44 @@ Impeccable stage remains the sole owner.
 | `GROK_DESIGN_BANK` | `~/Design` | Refero + Motionsites for `/found-this-design` |
 | `GROK_DESIGN_INTELLIGENCE_BANK` | `~/DesignIntelligence` | This catalog |
 
-They must not mix. Install does not create the intelligence bank. Tests
-must pass `--bank` at a temporary path.
+They must not mix. `./install.sh` packages the engine and leaves the
+intelligence bank missing unless you pass
+`--with-design-intelligence-bank /path/to/packs`. Tests must pass
+`--bank` at a temporary path. The installer never scans the home
+directory for ZIP files.
 
 ## Why the raw ZIPs are not in git
 
 The packs are large, untrusted, and not cleared for redistribution.
 GrokBestFriend does not vendor them and does not attach them to a
-Release in this change. You keep your own copies. `*.zip` stays gitignored.
+Release. Bring four legally obtained ZIPs on private media or from the
+upstream source you already have rights to use. `*.zip` stays gitignored.
+
+```bash
+./install.sh --with-design-intelligence-bank ~/OpenDesignPacks
+```
+
+Automatic import is allowed only when the four archives are an exact
+known snapshot (`od-packs-2026-07-20` in v1.3.1). A missing bank is
+`DEGRADED`, not an engine failure. A successful known-snapshot import
+is `SUCCESS_WITH_EXPECTED_LIMITATIONS`: integrity passes, content
+stays `DEGRADED` for unknown licenses, stubs, quarantine, and missing
+optional connectors. An existing healthy matching bank is reused and
+its install manifest fragment is rewritten from the live catalog. An
+existing corrupt or different bank is not overwritten. Uninstall keeps
+`~/DesignIntelligence` as user data.
+
+The installer bootstrap phases (`stage`, `promote`, `remove-staging`,
+`recover-created`) are installer-only. Impeccable may call `plan`,
+`shortlist`, `search`, `doctor`, and selection commands; it cannot
+invoke bootstrap. Staging lives at `~/DesignIntelligence.stage.<id>`
+with a private transaction marker. Recovery of a crash reloads that
+state from the installer journal in a new process. Search verification
+runs against the staged catalog before the atomic rename. Dry-run
+never creates the target parent or a staging directory. The bank
+target cannot be `/`, `$HOME`, `~/.grok` or anything inside it, a Git
+repository, the archive directory, or a path that reaches those
+locations through a symlink.
 
 ## Trust, license, evidence
 
