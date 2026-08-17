@@ -44,6 +44,24 @@ def main() -> int:
         check(names.get("lineage_pointers") == "PASS", "lineage pointers pass", failed)
         check(names.get("host_probe_persisted") == "PASS", "no persisted probe", failed)
         check(names.get("archive_hashes") == "DEGRADED", "unknown snapshot DEGRADED", failed)
+        check(names.get("catalog_rows") == "PASS", "fixture rows valid", failed)
+        check(names.get("generation_identity") == "PASS", "generation identity valid", failed)
+        check(names.get("lock_artifacts") == "PASS", "lock artifacts present", failed)
+
+        snap = known["snapshots"][0]["archives"]
+        check(policy_mod.snapshot_for_hashes(known, dict(snap)) == "od-packs-2026-07-20", "exact snapshot matches", failed)
+        partial = dict(list(snap.items())[:2])
+        check(policy_mod.snapshot_for_hashes(known, partial) is None, "partial snapshot is not known", failed)
+        extra = dict(snap)
+        extra["other.zip"] = "a" * 64
+        check(policy_mod.snapshot_for_hashes(known, extra) is None, "extra archive is not known", failed)
+
+        broken = Path(tmp) / "missing-sqlite"
+        seed_bank(broken)
+        lock = catalog.read_lock(broken)
+        (broken / "catalog" / lock["sqlite_filename"]).unlink()
+        missing = doctor_mod.doctor(broken, policy, known)
+        check(missing["status"] == "BLOCKED", "missing sqlite BLOCKED", failed)
 
         blocked = doctor_mod.doctor(
             bank,

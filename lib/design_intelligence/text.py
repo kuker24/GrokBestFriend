@@ -11,6 +11,43 @@ _HTML = re.compile(r"<[^>]+>")
 _MD_IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
 _MD_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
+# Identity / structural values must stay byte-stable. Nested dicts still recurse.
+SKIP_VALUE_KEYS = frozenset(
+    {
+        "id",
+        "kind",
+        "canonical_id",
+        "alias_of",
+        "duplicate_of",
+        "dedup_reason",
+        "trust",
+        "evidence_tier",
+        "execution_class",
+        "style_authority",
+        "search_policy",
+        "selection_policy",
+        "normalization_status",
+        "content_sha256",
+        "archive",
+        "path",
+        "url",
+        "version",
+        "status",
+        "redistribution",
+        "spdx",
+        "schema_version",
+    }
+)
+
+# Fallback only when policy has no patterns. Split so installer greps miss this file.
+_VALUE = r"""\s*[=:]\s*(?:"[^"]*"|'[^']*'|\S+)"""
+_FALLBACK_SECRET_RES = (
+    re.compile("XAI_API_" "KEY" + _VALUE, re.IGNORECASE),
+    re.compile("gho_" r"[A-Za-z0-9]{10,}"),
+    re.compile("xai-" r"[A-Za-z0-9]{16,}"),
+    re.compile("Bearer " r"[A-Za-z0-9._-]{20,}"),
+)
+
 
 def _collapse_ws(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
@@ -29,19 +66,24 @@ def strip_controls(text: str) -> str:
     return "".join(out)
 
 
-# Built-in redaction. Split so installer secret greps do not fire on this file.
-_SECRET_RES = (
-    re.compile("XAI_API_" "KEY="),
-    re.compile(r"gho_[A-Za-z0-9]{10,}"),
-    re.compile(r"xai-[A-Za-z0-9]{16,}"),
-    re.compile(r"Bearer [A-Za-z0-9._-]{20,}"),
-)
+def compile_secret_patterns(policy: dict[str, Any] | None) -> list[re.Pattern[str]]:
+    compiled: list[re.Pattern[str]] = []
+    if not policy:
+        return list(_FALLBACK_SECRET_RES)
+    for item in policy.get("secret_pattern_parts") or []:
+        if isinstance(item, list) and item:
+            compiled.append(re.compile("".join(str(part) for part in item)))
+        elif isinstance(item, str) and item:
+            compiled.append(re.compile(item))
+    for item in policy.get("secret_patterns") or []:
+        if isinstance(item, str) and item:
+            compiled.append(re.compile(item))
+    return compiled or list(_FALLBACK_SECRET_RES)
 
 
 def redact_secrets(text: str, policy: dict[str, Any] | None = None) -> str:
-    del policy
     out = text
-    for compiled in _SECRET_RES:
+    for compiled in compile_secret_patterns(policy):
         out = compiled.sub("[REDACTED]", out)
     return out
 
@@ -117,3 +159,53 @@ def unique_keep(values: list[str], limit: int) -> list[str]:
         if len(out) >= limit:
             break
     return out
+
+
+def _limit_for(key: str | None, policy: dict[str, Any]) -> int:
+    caps = policy.get("text") or {}
+    if key == "name":
+        return int(caps.get("name_max") or 160)
+    if key == "description":
+        return int(caps.get("description_max") or 400)
+    if key == "search_text":
+        return int(caps.get("search_text_max") or 1200)
+    if key in {"tags", "categories", "intent", "modes", "surfaces", "platforms"}:
+        return int(caps.get("tag_max") or 48)
+    return int(caps.get("field_max") or 240)
+
+
+def sanitize_tree(value: Any, policy: dict[str, Any], *, key: str | None = None) -> Any:
+    """Recursively sanitize every persisted string except structural keys."""
+    if isinstance(value, dict):
+        return {str(child_key): sanitize_tree(child, policy, key=str(child_key)) for child_key, child in value.items()}
+    if isinstance(value, list):
+        return [sanitize_tree(child, policy, key=key) for child in value]
+    if key in SKIP_VALUE_KEYS:
+        return value
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    if isinstance(value, str):
+        return sanitize_field(value, policy, max_len=_limit_for(key, policy))
+    return sanitize_field(str(value), policy, max_len=_limit_for(key, policy))
+
+
+def walk_strings(value: Any) -> list[str]:
+    found: list[str] = []
+    if isinstance(value, str):
+        found.append(value)
+    elif isinstance(value, dict):
+        for child in value.values():
+            found.extend(walk_strings(child))
+    elif isinstance(value, list):
+        for child in value:
+            found.extend(walk_strings(child))
+    return found
+
+
+def find_secret_hits(value: Any, policy: dict[str, Any] | None) -> bool:
+    patterns = compile_secret_patterns(policy)
+    for blob in walk_strings(value):
+        for compiled in patterns:
+            if compiled.search(blob):
+                return True
+    return False

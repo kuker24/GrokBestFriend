@@ -21,7 +21,11 @@ Those are derived at search/doctor time.
 
 ## License
 
-- SPDX only from an item-owned LICENSE file whose text matches the policy table.
+- SPDX `known` only from an item-owned LICENSE file that matches the
+  full canonical signature in policy (every required phrase, plus any
+  grant phrase). One substring is not enough.
+- Decoy text such as "not distributed under the Apache License" is
+  not a grant.
 - Nested vendor LICENSE files do not license the parent item.
 - Manifest license without a file is `declared-only` / `local-only`.
 - Missing is `unknown` / `local-only`.

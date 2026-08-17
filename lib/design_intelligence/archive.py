@@ -137,6 +137,8 @@ def inspect_archive(path: Path, policy: dict[str, Any], taxonomy: dict[str, Any]
         if total > max_total:
             issues.append(ArchiveIssue("total_uncompressed", "", str(total)))
         family, top = detect_family(names, taxonomy)
+        if family is None:
+            issues.append(ArchiveIssue("UNSUPPORTED_ARCHIVE_FAMILY", top or "", "unknown top-level family"))
 
     return ArchiveInspection(
         path=path,

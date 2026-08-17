@@ -124,24 +124,48 @@ def read_lock(bank: Path) -> dict[str, Any] | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def load_items(bank: Path) -> list[dict[str, Any]]:
+def generation_id_for(jsonl_bytes: bytes, input_hashes: dict[str, str]) -> str:
+    parts: list[tuple[str, bytes]] = [("catalog.jsonl", jsonl_bytes)]
+    for name in sorted(input_hashes):
+        parts.append((f"archive:{name}", str(input_hashes[name]).encode("ascii")))
+    return normalize.framed_hash(parts)[:16]
+
+
+def persist_sanitize(item: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+    cleaned = text_mod.sanitize_tree(item, policy)
+    cleaned["search_text"] = _search_text(cleaned, policy)
+    return cleaned
+
+
+def load_items(bank: Path, policy: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     lock = read_lock(bank)
     if not lock:
         return []
+    errors = policy_mod.check_lock(lock)
+    if errors:
+        raise CatalogError("lock:" + ",".join(errors))
     catalog = bank_dirs(bank)["catalog"]
     jsonl = catalog / lock["jsonl_filename"]
-    digest = sha256_bytes(jsonl.read_bytes())
-    if digest != lock.get("jsonl_sha256"):
-        raise CatalogError("jsonl hash mismatch")
     sqlite_path = catalog / lock["sqlite_filename"]
-    if sqlite_path.is_file():
-        sqlite_digest = sha256_bytes(sqlite_path.read_bytes())
-        if sqlite_digest != lock.get("sqlite_sha256"):
-            raise CatalogError("sqlite hash mismatch")
+    if not jsonl.is_file() or not sqlite_path.is_file():
+        raise CatalogError("lock artifacts missing")
+    jsonl_bytes = jsonl.read_bytes()
+    if sha256_bytes(jsonl_bytes) != lock.get("jsonl_sha256"):
+        raise CatalogError("jsonl hash mismatch")
+    if sha256_bytes(sqlite_path.read_bytes()) != lock.get("sqlite_sha256"):
+        raise CatalogError("sqlite hash mismatch")
+    expected = generation_id_for(jsonl_bytes, {str(k): str(v) for k, v in (lock.get("input_hashes") or {}).items()})
+    if expected != lock.get("generation_id"):
+        raise CatalogError("generation_id mismatch")
     items: list[dict[str, Any]] = []
-    for line in jsonl.read_text(encoding="utf-8").splitlines():
+    for line in jsonl_bytes.decode("utf-8").splitlines():
         if line.strip():
             items.append(json.loads(line))
+    checker = policy if policy is not None else policy_mod.load_policy()
+    for item in items:
+        row_errors = policy_mod.check_item(item, checker)
+        if row_errors:
+            raise CatalogError(f"catalog_row:{item.get('id')}:{','.join(row_errors)}")
     return items
 
 
@@ -161,8 +185,11 @@ def import_archive(
         "members": inspection.members,
         "issues": [issue.code for issue in inspection.issues],
     }
-    dest_family = inspection.family if inspection.family in FAMILIES else "plugins"
-    if inspection.blocked:
+    dest_family = inspection.family if inspection.family in FAMILIES else None
+    if dest_family is None and "UNSUPPORTED_ARCHIVE_FAMILY" not in payload["issues"]:
+        payload["issues"] = list(payload["issues"]) + ["UNSUPPORTED_ARCHIVE_FAMILY"]
+    if inspection.blocked or dest_family is None:
+        payload["blocked"] = True
         dest = bank_dirs(bank)["quarantine"] / f"{inspection.sha256}.zip"
         shutil.copy2(archive_path, dest)
         (dest.with_suffix(".issues.json")).write_text(
@@ -219,14 +246,15 @@ def rebuild(
                 "issues": [issue.code for issue in inspection.issues],
             }
         )
-        if inspection.blocked:
+        use_family = inspection.family if inspection.family in FAMILIES else None
+        if inspection.blocked or use_family is None:
             warnings.append(f"blocked:{inspection.logical_name}")
             continue
         with archive_mod.open_zip(zip_path) as handle:
             items.extend(
                 extract_archive(
                     handle,
-                    family=family,
+                    family=use_family,
                     logical_name=str(meta.get("logical_name") or inspection.logical_name),
                     policy=policy,
                     taxonomy=taxonomy,
@@ -235,22 +263,41 @@ def rebuild(
 
     items = apply_lineage(items, taxonomy)
     items = apply_content_duplicates(items)
+    finalized: list[dict[str, Any]] = []
+    schema_errors: list[str] = []
     for item in items:
         item["canonical_id"] = item.get("alias_of") or item.get("duplicate_of") or item["id"]
+        item = persist_sanitize(item, policy)
         errors = policy_mod.check_item(item, policy)
         if errors:
-            item.setdefault("warnings", []).append("SCHEMA:" + ",".join(errors))
+            schema_errors.append(f"{item.get('id')}:{','.join(errors)}")
+            continue
+        finalized.append(item)
+    if schema_errors:
+        failed = {
+            "error": "schema_invalid",
+            "items": schema_errors[:32],
+        }
+        (dirs["reports"] / "rebuild-failed.json").write_text(
+            json.dumps(failed, indent=2) + "\n", encoding="utf-8"
+        )
+        raise CatalogError("schema_invalid:" + ";".join(schema_errors[:16]))
+    items = finalized
 
     items.sort(key=lambda row: row["id"])
     jsonl = "".join(dump_line(item) + "\n" for item in items)
     jsonl_bytes = jsonl.encode("utf-8")
-    generation_id = sha256_bytes(jsonl_bytes)[:16]
     input_hashes = {row["logical_name"]: row["sha256"] for row in archives_meta}
+    input_hashes = {name: input_hashes[name] for name in sorted(input_hashes)}
+    generation_id = generation_id_for(jsonl_bytes, input_hashes)
 
     lock = read_lock(bank)
-    if lock and lock.get("generation_id") == generation_id:
-        jsonl_path = dirs["catalog"] / lock["jsonl_filename"]
-        if jsonl_path.is_file() and sha256_bytes(jsonl_path.read_bytes()) == lock.get("jsonl_sha256"):
+    if lock and lock.get("generation_id") == generation_id and lock.get("input_hashes") == input_hashes:
+        try:
+            load_items(bank, policy)
+        except CatalogError:
+            pass
+        else:
             return {
                 "status": "ok",
                 "generation_id": generation_id,

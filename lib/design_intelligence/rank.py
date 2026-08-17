@@ -183,6 +183,9 @@ def search(
         if not ok:
             continue
         points, matched = score_item(item, query, policy)
+        min_score = float((policy.get("search") or {}).get("min_score") or 0)
+        if points <= 0 or points < min_score:
+            continue
         scored.append((points, item, matched, probe, reason))
     scored.sort(key=lambda row: (-row[0], row[1]["id"]))
     picked: list[dict[str, Any]] = []

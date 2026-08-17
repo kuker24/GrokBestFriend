@@ -90,6 +90,18 @@ def main() -> int:
         check(over.blocked and any(i.code == "member_too_large" for i in over.issues), "limit decompression abuse", failed)
         del huge, bomb
 
+        unknown = archive_mod.inspect_archive(
+            write_zip(tmp_path / "misc.zip", {"misc/readme.txt": "no family"}),
+            policy,
+            taxonomy,
+        )
+        check(unknown.family is None, "unknown family is None", failed)
+        check(
+            unknown.blocked and any(i.code == "UNSUPPORTED_ARCHIVE_FAMILY" for i in unknown.issues),
+            "unknown family blocked",
+            failed,
+        )
+
     if failed:
         print(f"test-design-intelligence-archive failed: {len(failed)}", file=sys.stderr)
         return 1

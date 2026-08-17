@@ -2,9 +2,40 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from . import text as text_mod
+
+
+def _normalize_declared_spdx(declared: str | None) -> str | None:
+    text = (declared or "").strip()
+    if not text:
+        return None
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.+-]{0,63}", text):
+        return text
+    return None
+
+
+def _signature_hits(license_text: str, spec: Any) -> bool:
+    if isinstance(spec, list):
+        required = spec
+        any_of: list[str] = []
+        forbidden: list[str] = []
+    elif isinstance(spec, dict):
+        required = list(spec.get("required") or [])
+        any_of = list(spec.get("any_of") or [])
+        forbidden = list(spec.get("forbidden") or [])
+    else:
+        return False
+    if not required or not all(needle in license_text for needle in required):
+        return False
+    if any_of and not any(needle in license_text for needle in any_of):
+        return False
+    low = license_text.lower()
+    if any(marker.lower() in low for marker in forbidden):
+        return False
+    return True
 
 
 def detect_license(
@@ -17,17 +48,15 @@ def detect_license(
     if not item_owned:
         license_text = None
     signatures = policy.get("license_signatures") or {}
-    found: str | None = None
+    matches: list[str] = []
     if license_text:
-        for spdx, needles in signatures.items():
-            if all(needle in license_text for needle in needles[:1]) or any(
-                needle in license_text for needle in needles
-            ):
-                # Require at least one strong needle
-                if any(needle in license_text for needle in needles):
-                    found = spdx
-                    break
-    declared_norm = (declared or "").strip() or None
+        for spdx, spec in signatures.items():
+            if _signature_hits(license_text, spec):
+                matches.append(str(spdx))
+    declared_norm = _normalize_declared_spdx(declared)
+    if len(matches) > 1:
+        return {"spdx": matches[0], "status": "conflicting", "redistribution": "blocked"}
+    found = matches[0] if matches else None
     if found and declared_norm and declared_norm not in {found, found.split("-")[0]}:
         if declared_norm.lower() not in found.lower() and found.lower() not in declared_norm.lower():
             return {"spdx": found, "status": "conflicting", "redistribution": "blocked"}
@@ -207,8 +236,6 @@ def classify_specialist(
 
 
 def re_word(text: str, token: str) -> bool:
-    import re
-
     return re.search(r"(?<![A-Za-z0-9_-])" + re.escape(token) + r"(?![A-Za-z0-9_-])", text) is not None
 
 

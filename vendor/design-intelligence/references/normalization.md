@@ -39,5 +39,11 @@ path order, then SHA-256 the stream.
 ## Generational catalog
 
 Write `catalog-<generation>.sqlite3` and `.jsonl` under new names.
+`generation_id` is a framed hash of the JSONL bytes plus every input
+archive hash. A ZIP byte change that does not change extracted
+metadata still produces a new generation.
+
 `catalog.lock.json` is the commit pointer and is replaced last.
-Readers open only the lock's files and verify hashes.
+Readers require both lock artifacts, verify their hashes, and re-check
+`generation_id`. A schema-invalid item fails the rebuild and leaves
+the last healthy lock in place.

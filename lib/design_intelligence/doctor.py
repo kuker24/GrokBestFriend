@@ -7,7 +7,7 @@ from typing import Any
 
 from . import archive as archive_mod
 from . import policy as policy_mod
-from .catalog import listed_raw, load_items, read_lock, resolve_bank
+from .catalog import generation_id_for, listed_raw, load_items, read_lock, resolve_bank, bank_dirs
 from .rank import derive_hit, load_allowlist, probe_item
 
 
@@ -45,17 +45,46 @@ def doctor(
         add("catalog_lock", "DEGRADED", "missing")
         return {"status": status, "checks": checks, "bank": str(bank)}
 
+    lock_errors = policy_mod.check_lock(lock)
+    if lock_errors:
+        add("catalog_lock", "BLOCKED", ",".join(lock_errors))
+        return {"status": status, "checks": checks, "bank": str(bank)}
+    add("catalog_lock", "PASS")
+
     if lock.get("schema_version") != 1:
         add("schema_version", "BLOCKED", str(lock.get("schema_version")))
     else:
         add("schema_version", "PASS", "1")
 
     try:
-        items = load_items(bank)
+        items = load_items(bank, policy)
         add("index_parse", "PASS", str(len(items)))
+        add("lock_artifacts", "PASS")
     except Exception as exc:
         add("index_parse", "BLOCKED", str(exc))
+        add("lock_artifacts", "BLOCKED", str(exc))
         return {"status": status, "checks": checks, "bank": str(bank)}
+
+    catalog = bank_dirs(bank)["catalog"]
+    jsonl_path = catalog / lock["jsonl_filename"]
+    expected_gen = generation_id_for(
+        jsonl_path.read_bytes(),
+        {str(k): str(v) for k, v in (lock.get("input_hashes") or {}).items()},
+    )
+    if expected_gen != lock.get("generation_id"):
+        add("generation_identity", "BLOCKED", "lock generation_id does not match jsonl+inputs")
+    else:
+        add("generation_identity", "PASS")
+
+    row_failures: list[str] = []
+    for item in items:
+        row_errors = policy_mod.check_item(item, policy)
+        if row_errors:
+            row_failures.append(str(item.get("id") or "?"))
+    if row_failures:
+        add("catalog_rows", "BLOCKED", ",".join(row_failures[:8]))
+    else:
+        add("catalog_rows", "PASS")
 
     ids = [item["id"] for item in items]
     if len(ids) != len(set(ids)):
@@ -95,11 +124,16 @@ def doctor(
         add("reference_limitations", "DEGRADED", "stubs, quarantine, or unknown license present")
 
     hashes = {row[2].get("logical_name") or row[1].name: archive_mod.sha256_file(row[1]) for row in listed_raw(bank)}
+    lock_inputs = {str(k): str(v) for k, v in (lock.get("input_hashes") or {}).items()}
+    if hashes != lock_inputs:
+        add("lock_inputs", "DEGRADED", "raw archive hashes differ from lock input_hashes")
+    else:
+        add("lock_inputs", "PASS")
     snapshot = policy_mod.snapshot_for_hashes(known, hashes)
     if hashes and snapshot:
         add("archive_hashes", "PASS", snapshot)
     elif hashes:
-        add("archive_hashes", "DEGRADED", "unknown snapshot")
+        add("archive_hashes", "DEGRADED", "unknown or partial snapshot")
     else:
         add("archive_hashes", "PASS", "no-raw-archives")
 

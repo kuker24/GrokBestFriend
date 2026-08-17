@@ -74,19 +74,25 @@ Search never opens a package (`packages_loaded_during_search = 0`).
 Default results hide aliases and duplicates. Systems with unknown
 license remain eligible as local reference. ZIP specialists are not
 selected unless `--include-unavailable` is set, and even then they are
-not executable.
+not executable. A query with no lexical overlap returns no hits.
 
 Doctor returns `PASS`, `DEGRADED`, or `BLOCKED`. A missing bank is
-`DEGRADED`. These four current packs should be `DEGRADED`. An unknown
-archive hash is `DEGRADED` unless you pass `--expected-sha` or
-`--claimed-snapshot`.
+`DEGRADED`. These four current packs should be `DEGRADED`. A known
+snapshot matches only when the bank contains exactly that set of
+archives and hashes. A partial set or an extra archive is `DEGRADED`.
+`--expected-sha` or `--claimed-snapshot` mismatches are `BLOCKED`.
 
 The catalog is generational: `catalog.lock.json` is the commit pointer
-and is written last. A crashed rebuild keeps the last healthy lock.
+and is written last. Both the JSONL and SQLite artifacts must exist
+and match the lock. Schema-invalid rows fail the rebuild. A crashed
+or invalid rebuild keeps the last healthy lock.
 
-ZIP prose is untrusted. Stored fields are shortened, stripped of code
-and HTML, and secret-redacted. Future retrieval must quote them as
-evidence, not as instructions.
+ZIP prose is untrusted. Every persisted string is sanitized. Secret
+patterns come from policy and redact the assignment and its value.
+Future retrieval must quote stored fields as evidence, not as
+instructions. An archive whose top-level family is not systems,
+templates, plugins, or skills is quarantined as
+`UNSUPPORTED_ARCHIVE_FAMILY`.
 
 ## Limits
 

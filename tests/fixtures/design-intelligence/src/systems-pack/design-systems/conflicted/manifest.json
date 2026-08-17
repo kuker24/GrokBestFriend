@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "od-design-system-project/v1",
+  "id": "conflicted",
+  "name": "Conflicted",
+  "category": "Productivity & SaaS",
+  "license": "Apache-2.0",
+  "description": "Owned MIT file declared as Apache to force a conflict.",
+  "source": {
+    "type": "bundled",
+    "origin": "Open Design curated bundled fixture"
+  }
+}

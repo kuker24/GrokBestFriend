@@ -23,6 +23,7 @@
     "recipe_limit": 3,
     "specialist_limit": 3,
     "diversity_penalty": 4.0,
+    "min_score": 0.01,
     "weights": {
       "name": 8.0,
       "id": 4.0,
@@ -32,10 +33,40 @@
       "summary": 2.0
     }
   },
+  "secret_pattern_parts": [
+    ["XAI_API_", "KEY", "\\s*[=:]\\s*(?:\"[^\"]*\"|'[^']*'|\\S+)"],
+    ["gho_", "[A-Za-z0-9]{10,}"],
+    ["xai-", "[A-Za-z0-9]{16,}"],
+    ["Bearer ", "[A-Za-z0-9._-]{20,}"]
+  ],
   "license_files": ["LICENSE", "LICENSE.txt", "LICENSE.md", "COPYING"],
   "license_signatures": {
-    "MIT": ["MIT License", "Permission is hereby granted, free of charge"],
-    "Apache-2.0": ["Apache License", "Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0"]
+    "MIT": {
+      "required": [
+        "MIT License",
+        "Permission is hereby granted, free of charge",
+        "THE SOFTWARE IS PROVIDED"
+      ],
+      "forbidden": [
+        "not licensed under the mit",
+        "not distributed under the mit"
+      ]
+    },
+    "Apache-2.0": {
+      "required": [
+        "Apache License",
+        "Version 2.0",
+        "http://www.apache.org/licenses/LICENSE-2.0"
+      ],
+      "any_of": [
+        "Licensed under the Apache License",
+        "TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION"
+      ],
+      "forbidden": [
+        "not distributed under the apache",
+        "not licensed under the apache"
+      ]
+    }
   },
   "stub_markers": [
     "This catalogue entry advertises the skill in Open Design",

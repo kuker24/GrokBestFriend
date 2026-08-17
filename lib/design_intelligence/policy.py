@@ -47,19 +47,49 @@ def known_hash_map(known: dict[str, Any]) -> dict[str, str]:
 
 
 def snapshot_for_hashes(known: dict[str, Any], hashes: dict[str, str]) -> str | None:
-    wanted = {name: digest for name, digest in hashes.items()}
+    """Return a snapshot id only when the incoming set equals that snapshot exactly."""
+    incoming = {str(name): str(digest) for name, digest in hashes.items()}
     for snap in known.get("snapshots") or []:
-        archives = snap.get("archives") or {}
+        archives = {str(name): str(digest) for name, digest in (snap.get("archives") or {}).items()}
         if not archives:
             continue
-        if all(wanted.get(name) == digest for name, digest in archives.items() if name in wanted):
-            if any(name in wanted for name in archives):
-                return str(snap.get("id"))
+        if incoming == archives:
+            return str(snap.get("id"))
     return None
 
 
 def compile_secret_patterns(policy: dict[str, Any]) -> list[re.Pattern[str]]:
-    return [re.compile(p) for p in policy.get("secret_patterns") or []]
+    from . import text as text_mod
+
+    return text_mod.compile_secret_patterns(policy)
+
+
+def check_lock(lock: Any) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(lock, dict):
+        return ["lock"]
+    if lock.get("schema_version") != 1:
+        errors.append("schema_version")
+    gid = str(lock.get("generation_id") or "")
+    if not re.fullmatch(r"[0-9a-f]{16,64}", gid):
+        errors.append("generation_id")
+    if not re.fullmatch(r"catalog-[0-9a-f]+\.sqlite3", str(lock.get("sqlite_filename") or "")):
+        errors.append("sqlite_filename")
+    if not re.fullmatch(r"catalog-[0-9a-f]+\.jsonl", str(lock.get("jsonl_filename") or "")):
+        errors.append("jsonl_filename")
+    for digest_key in ("sqlite_sha256", "jsonl_sha256"):
+        if not re.fullmatch(r"[0-9a-f]{64}", str(lock.get(digest_key) or "")):
+            errors.append(digest_key)
+    if not lock.get("created_at"):
+        errors.append("created_at")
+    hashes = lock.get("input_hashes")
+    if not isinstance(hashes, dict):
+        errors.append("input_hashes")
+    else:
+        for name, digest in hashes.items():
+            if not re.fullmatch(r"[0-9a-f]{64}", str(digest)):
+                errors.append(f"input_hashes.{name}")
+    return errors
 
 
 def check_item(item: dict[str, Any], policy: dict[str, Any]) -> list[str]:
@@ -164,5 +194,10 @@ def check_item(item: dict[str, Any], policy: dict[str, Any]) -> list[str]:
     pointer = item.get("alias_of") or item.get("duplicate_of")
     if pointer and pointer == item.get("id"):
         errors.append("self_pointer")
+
+    from . import text as text_mod
+
+    if text_mod.find_secret_hits(item, policy):
+        errors.append("secret_leak")
 
     return errors

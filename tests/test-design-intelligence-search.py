@@ -76,6 +76,14 @@ def main() -> int:
         )
         check([row["id"] for row in again["results"]] == [row["id"] for row in systems["results"]],
               "same ranking", failed)
+        check(all(row["score"] > 0 for row in systems["results"]), "positive scores only", failed)
+
+        miss = rank.search(
+            items, kind="system", query="quantum-banana-xyz", policy=policy, allowlist=allowlist
+        )
+        check(miss["results"] == [], "no-match → results=[]", failed)
+        empty = rank.search(items, kind="system", query="   ", policy=policy, allowlist=allowlist)
+        check(empty["results"] == [], "empty query → results=[]", failed)
 
         # diversity: two systems share no category with query tokens still bounded
         check(len({row["id"] for row in systems["results"]}) == len(systems["results"]), "unique hits", failed)

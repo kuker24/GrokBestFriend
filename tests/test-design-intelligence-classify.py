@@ -13,7 +13,20 @@ sys.path.insert(0, str(ROOT / "lib"))
 sys.path.insert(0, str(ROOT / "tests"))
 
 from design_intelligence import catalog  # noqa: E402
+from design_intelligence import classify  # noqa: E402
+from design_intelligence import policy as policy_mod  # noqa: E402
+from design_intelligence import text as text_mod  # noqa: E402
 from design_intelligence_support import seed_bank  # noqa: E402
+
+CANARIES = (
+    "canary-from-manifest-do-not-keep",
+    "canary-from-design-do-not-keep",
+    "canary-from-template-do-not-keep",
+    "canary-from-frontmatter-do-not-keep",
+    "canary-from-opendesign-do-not-keep",
+    "sk-test-should-not-persist-in-catalog",
+    "super-secret",
+)
 
 
 def check(cond: bool, label: str, failed: list[str]) -> None:
@@ -72,12 +85,57 @@ def main() -> int:
         check(licensed["license"]["status"] == "known", "owned MIT is known", failed)
         check(licensed["license"]["spdx"] == "MIT", "owned MIT SPDX", failed)
 
+        decoy = items["structure:decoy-apache"]
+        check(decoy["license"]["status"] != "known", "decoy Apache is not known", failed)
+        check(decoy["license"]["redistribution"] != "allowed", "decoy Apache never allowed", failed)
+
+        conflicted = items["system:conflicted"]
+        check(conflicted["license"]["status"] == "conflicting", "declared vs file conflict", failed)
+        check(conflicted["license"]["redistribution"] == "blocked", "conflict is blocked", failed)
+
+        policy = policy_mod.load_policy()
+        decoy_text = (
+            "This work is not distributed under the Apache License, Version 2.0.\n"
+            "See http://www.apache.org/licenses/LICENSE-2.0\n"
+        )
+        decoy_hit = classify.detect_license(decoy_text, None, policy, item_owned=True)
+        check(decoy_hit["status"] != "known", "unit decoy is not known", failed)
+        check(decoy_hit["redistribution"] != "allowed", "unit decoy not allowed", failed)
+
+        apache_text = (
+            "Apache License\nVersion 2.0, January 2004\n"
+            "http://www.apache.org/licenses/LICENSE-2.0\n\n"
+            "TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n"
+            'Licensed under the Apache License, Version 2.0 (the "License");\n'
+        )
+        apache_hit = classify.detect_license(apache_text, None, policy, item_owned=True)
+        check(apache_hit == {"spdx": "Apache-2.0", "status": "known", "redistribution": "allowed"},
+              "canonical Apache is known", failed)
+
+        redacted = text_mod.redact_secrets("prefix XAI_API_" "KEY=super-secret suffix", policy)
+        check("super-secret" not in redacted, "secret value redacted", failed)
+        check("[REDACTED]" in redacted, "redaction marker present", failed)
+        check("XAI_API_" "KEY=" not in redacted, "secret assignment not stored", failed)
+
         hostile = items["specialist:hostile"]
         blob = json_blob(hostile)
         check("XAI_API_KEY=" not in blob, "secret redacted in catalog", failed)
         check("Bearer 0123456789" not in blob, "bearer redacted in catalog", failed)
+        check("sk-test-should-not-persist-in-catalog" not in blob, "hostile secret value gone", failed)
         check("UNTRUSTED_INSTRUCTION_TEXT" in hostile["warnings"] or "CATALOGUE_INSTALL_POINTER" in hostile["warnings"],
               "hostile warnings recorded", failed)
+
+        catalog_blob = "\n".join(json_blob(item) for item in items.values())
+        for canary in CANARIES:
+            check(canary not in catalog_blob, f"canary absent:{canary}", failed)
+        brand = items["system:brandco"]
+        dash = items["structure:dashboard"]
+        taste = items["specialist:design-taste-frontend"]
+        check(brand["description"], "brand description still present", failed)
+        check("marketplace" in brand["description"].lower(), "brand searchable after redact", failed)
+        check(any("sidebar" in str(region).lower() for region in (dash.get("summary") or {}).get("required_data_regions") or []),
+              "template regions kept after redact", failed)
+        check("anti-slop" in taste["description"].lower(), "frontmatter description kept after redact", failed)
 
     if failed:
         print(f"test-design-intelligence-classify failed: {len(failed)}", file=sys.stderr)
