@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "od-design-system-project/v1",
+  "id": "tomlike",
+  "name": "Tomlike",
+  "category": "Starter",
+  "description": "Editorial-technical starter with a declared upstream URL.",
+  "source": {
+    "type": "bundled",
+    "origin": "https://github.com/example/tomlike"
+  }
+}

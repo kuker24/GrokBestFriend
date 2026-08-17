@@ -1,0 +1,6 @@
+{
+  "name": "example-dashboard",
+  "title": "Dashboard example",
+  "description": "Example that matches the dashboard template.",
+  "od": {"kind": "example", "mode": "prototype"}
+}

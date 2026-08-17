@@ -60,3 +60,13 @@ jobs:
         run: ./tests/test-install-transaction.sh
       - name: Design bank dest policy
         run: ./tests/test-design-bank.sh
+      - name: Design intelligence
+        run: |
+          set -euo pipefail
+          python3 tests/test-design-intelligence-archive.py
+          python3 tests/test-design-intelligence-catalog.py
+          python3 tests/test-design-intelligence-classify.py
+          python3 tests/test-design-intelligence-search.py
+          python3 tests/test-design-intelligence-authority.py
+          python3 tests/test-design-intelligence-doctor.py
+          python3 tests/test-design-intelligence-optional-audit.py

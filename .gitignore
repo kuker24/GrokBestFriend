@@ -3,6 +3,7 @@
 *.tar.gz
 *.zip
 design-bank/
+/DesignIntelligence/
 .grok-install-tmp/
 vendor/.cache/
 

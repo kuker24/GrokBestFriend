@@ -1,0 +1,8 @@
+{
+  "name": "design-system-acme",
+  "title": "Acme",
+  "version": "0.1.0",
+  "description": "Official plugin alias of the Acme system.",
+  "license": "MIT",
+  "od": {"kind": "design-system"}
+}
