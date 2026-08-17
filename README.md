@@ -72,6 +72,8 @@ https://github.com/kuker24/GrokBestFriend/releases/download/v1.0.0/Design-bank.t
 
 SHA-256 is pinned in `vendor/sources.json`. Details: [docs/design-bank.md](docs/design-bank.md).
 
+A separate **Design Intelligence** catalog (`GROK_DESIGN_INTELLIGENCE_BANK`, default `~/DesignIntelligence`) is a v1.2.0 candidate library. It is not active routing, it does not change `/found-this-design` or `~/Design`, and `VERSION` stays 1.2.0. See [docs/design-intelligence.md](docs/design-intelligence.md).
+
 ## After install (human only)
 
 ```bash

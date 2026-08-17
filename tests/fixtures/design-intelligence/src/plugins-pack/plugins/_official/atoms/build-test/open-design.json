@@ -1,0 +1,7 @@
+{
+  "name": "build-test",
+  "title": "Build test",
+  "description": "Run project checks. Metadata only.",
+  "license": "MIT",
+  "od": {"kind": "atom", "capabilities": ["fs:read"]}
+}

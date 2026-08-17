@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "od-design-system-project/v1",
+  "id": "brandco",
+  "name": "BrandCo",
+  "category": "E-Commerce & Retail",
+  "description": "Warm marketplace fixture named after a fictional brand.",
+  "source": {
+    "type": "bundled",
+    "origin": "Open Design curated bundled fixture"
+  }
+}
