@@ -199,6 +199,8 @@ def search(
             if best_adj is None or adj > best_adj or (adj == best_adj and item["id"] < pending[best_index][1]["id"]):
                 best_adj = adj
                 best_index = index
+        if best_adj is None or best_adj <= 0:
+            break
         points, item, matched, probe, reason = pending.pop(best_index)
         picked.append(item)
         derived = derive_hit(item, probe)

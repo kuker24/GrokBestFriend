@@ -9,6 +9,7 @@ source "$ROOT/lib/tools.sh"
 source "$ROOT/lib/config.sh"
 source "$ROOT/lib/mcp.sh"
 source "$ROOT/lib/design-bank.sh"
+source "$ROOT/lib/design-intelligence-bank.sh"
 source "$ROOT/lib/transaction.sh"
 source "$ROOT/lib/install.sh"
 source "$ROOT/lib/doctor.sh"
@@ -20,6 +21,8 @@ Install this machine's GrokBuild system onto a new laptop.
 Usage:
   ./install.sh --dry-run
   ./install.sh
+  ./install.sh --with-design-intelligence-bank /path/to/OpenDesignPacks
+  ./install.sh --skip-design-intelligence-bank
   ./install.sh --doctor
   ./install.sh --doctor --strict
   ./install.sh --restore [stamp]
@@ -36,6 +39,7 @@ Does:
   - register MCP servers (serena and exa stay disabled)
   - install grok-chromium-cdp
   - restore the Refero + Motionsites design bank to ~/Design
+  - optionally import user-supplied Open Design packs into ~/DesignIntelligence
   - leave bundled /implement and /review unshadowed
   - leave [compat.claude] off
 
@@ -44,13 +48,24 @@ Does not:
   - copy tokens, gateway URLs, or model mappings
   - install Grok marketplace plugins (none are installed on the source machine)
   - launch Google Chrome
+  - redistribute or download Open Design packs
+  - delete ~/DesignIntelligence on uninstall
+
+The repository does not redistribute Open Design packs.
+The installer only imports archives explicitly supplied by the user.
+
+--doctor --strict: engine/CLI failures and BANK_BLOCKED fail the run.
+Expected bank content limitations (unknown licenses, stubs, quarantine,
+missing optional connectors) stay DEGRADED and do not force a nonzero exit.
+A missing bank is DEGRADED, not an engine failure, unless a previous
+manifest recorded the bank as installed.
 EOF
 }
 
 mode="install"
 restore_stamp=""
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --dry-run) GRT_DRY_RUN=1 ;;
     --doctor) mode="doctor" ;;
     --strict) GRT_DOCTOR_STRICT=1 ;;
@@ -58,16 +73,30 @@ for arg in "$@"; do
     --recover) mode="recover" ;;
     --skip-tools) GRT_SKIP_TOOLS=1 ;;
     --skip-design-bank) GRT_SKIP_DESIGN_BANK=1 ;;
+    --skip-design-intelligence-bank) GRT_DI_BANK_SKIP=1 ;;
+    --with-design-intelligence-bank)
+      GRT_DI_BANK_REQUEST=1
+      if [[ $# -ge 2 && "$2" != --* ]]; then
+        GRT_DI_ARCHIVE_DIR="$2"
+        shift
+      fi
+      ;;
     -h|--help) usage; exit 0 ;;
     *)
-      if [[ "$mode" == "restore" && -z "$restore_stamp" && "$arg" != --* ]]; then
-        restore_stamp="$arg"
+      if [[ "$mode" == "restore" && -z "$restore_stamp" && "$1" != --* ]]; then
+        restore_stamp="$1"
       else
-        grt_die "Unknown argument: $arg"
+        grt_die "Unknown argument: $1"
       fi
       ;;
   esac
+  shift
 done
+
+if [[ "$GRT_DI_BANK_REQUEST" == 1 && "$GRT_DI_BANK_SKIP" == 1 ]]; then
+  grt_die "FAIL CONFLICTING_DI_BANK_FLAGS"
+fi
+grt_di_resolve_request
 
 case "$mode" in
   doctor)
@@ -99,6 +128,8 @@ case "$mode" in
     else
       if ! grt_doctor; then
         GRT_TX_IN_HANDLER=1
+        grt_di_recover_promoted
+        grt_di_cleanup_staging
         grt_restore_backup
         grt_lock_end
         grt_die "doctor found failures; restored backup ${GRT_BACKUP_STAMP:-latest}"

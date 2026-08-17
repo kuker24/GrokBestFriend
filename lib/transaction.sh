@@ -8,6 +8,13 @@ GRT_CREATED_PATH_MARKER="${GRT_CREATED_PATH_MARKER:-0}"
 GRT_CREATED_DESIGN_BANK_EXPORT="${GRT_CREATED_DESIGN_BANK_EXPORT:-0}"
 GRT_CREATED_DESIGN_BANK="${GRT_CREATED_DESIGN_BANK:-0}"
 
+if ! type grt_di_cleanup_staging >/dev/null 2>&1; then
+  grt_di_cleanup_staging() { return 0; }
+fi
+if ! type grt_di_recover_promoted >/dev/null 2>&1; then
+  grt_di_recover_promoted() { return 0; }
+fi
+
 grt_backup_root() {
   printf '%s\n' "$GRT_HOME/runtime/backups"
 }
@@ -157,7 +164,10 @@ grt_tx_write_journal() {
   python3 - "$dest" "$GRT_HOME" "$GRT_SKILLS" "$GRT_RULES" "$GRT_HOOKS" "$GRT_MANIFEST" \
     "${GRT_BACKUP_STAMP:-}" "$(grt_tx_state)" "$(grt_swap_old_path)" \
     "$GRT_CREATED_PATH_MARKER" "$GRT_CREATED_DESIGN_BANK_EXPORT" "$GRT_CREATED_DESIGN_BANK" \
-    "${GRT_RC_PATH:-}" <<'PY'
+    "${GRT_RC_PATH:-}" \
+    "${GRT_DI_ACTION:-skip}" "${GRT_DI_CREATED:-0}" "${GRT_DI_STAGING:-}" \
+    "${GRT_DI_TARGET_DISPLAY:-~/DesignIntelligence}" "${GRT_DI_RECOVERY:-}" \
+    "${GRT_DI_SNAPSHOT:-}" "${HOME}" <<'PY'
 import json, sys
 from pathlib import Path
 
@@ -167,6 +177,8 @@ skills, rules, hooks, manifest = map(Path, sys.argv[3:7])
 stamp, state, swap_old = sys.argv[7], sys.argv[8], sys.argv[9]
 created_path, created_export, created_bank = sys.argv[10], sys.argv[11], sys.argv[12]
 rc_path = sys.argv[13]
+di_action, di_created, di_staging = sys.argv[14], sys.argv[15], sys.argv[16]
+di_target, di_recovery, di_snapshot, home_user = sys.argv[17], sys.argv[18], sys.argv[19], sys.argv[20]
 chromium = home / "bin" / "grok-chromium-cdp"
 config = home / "config.toml"
 learning = home / "runtime" / "learning" / "events.jsonl"
@@ -187,8 +199,17 @@ payload = {
         "path_marker": created_path == "1",
         "design_bank_export": created_export == "1",
         "design_bank": created_bank == "1",
+        "design_intelligence_bank": di_created == "1",
     },
     "rc_path": rc_path,
+    "design_intelligence": {
+        "action": di_action,
+        "created_this_run": di_created == "1",
+        "staging": di_staging,
+        "target": di_target,
+        "recovery": di_recovery,
+        "snapshot": di_snapshot or None,
+    },
 }
 dest.parent.mkdir(parents=True, exist_ok=True)
 dest.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -199,7 +220,9 @@ grt_tx_update_created() {
   local dest
   dest="$(grt_tx_path)"
   [[ -f "$dest" ]] || return 0
-  python3 - "$dest" "$GRT_CREATED_PATH_MARKER" "$GRT_CREATED_DESIGN_BANK_EXPORT" "$GRT_CREATED_DESIGN_BANK" "${GRT_RC_PATH:-}" <<'PY'
+  python3 - "$dest" "$GRT_CREATED_PATH_MARKER" "$GRT_CREATED_DESIGN_BANK_EXPORT" "$GRT_CREATED_DESIGN_BANK" "${GRT_RC_PATH:-}" \
+    "${GRT_DI_ACTION:-skip}" "${GRT_DI_CREATED:-0}" "${GRT_DI_STAGING:-}" \
+    "${GRT_DI_TARGET_DISPLAY:-~/DesignIntelligence}" "${GRT_DI_RECOVERY:-}" "${GRT_DI_SNAPSHOT:-}" <<'PY'
 import json, sys
 from pathlib import Path
 path = Path(sys.argv[1])
@@ -208,8 +231,17 @@ created = data.setdefault("created_this_run", {})
 created["path_marker"] = sys.argv[2] == "1"
 created["design_bank_export"] = sys.argv[3] == "1"
 created["design_bank"] = sys.argv[4] == "1"
+created["design_intelligence_bank"] = sys.argv[7] == "1"
 if sys.argv[5]:
     data["rc_path"] = sys.argv[5]
+data["design_intelligence"] = {
+    "action": sys.argv[6],
+    "created_this_run": sys.argv[7] == "1",
+    "staging": sys.argv[8] or None,
+    "target": sys.argv[9],
+    "recovery": sys.argv[10] or None,
+    "snapshot": sys.argv[11] or None,
+}
 path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 PY
   if [[ -n "${GRT_BACKUP_STAMP:-}" ]]; then
@@ -239,8 +271,15 @@ grt_tx_check_stale() {
       rm -f -- "$path"
       return 0
       ;;
+    BANK_STAGED)
+      grt_warn "incomplete transaction (BANK_STAGED); dropping unused Design Intelligence staging"
+      grt_di_cleanup_staging || true
+      rm -f -- "$path"
+      return 0
+      ;;
     MUTATING)
       grt_warn "incomplete transaction (MUTATING); restoring managed surfaces from ${stamp:-latest}"
+      grt_di_cleanup_staging || true
       grt_recover_swap_old || true
       if [[ -n "$stamp" ]]; then
         grt_restore_backup "$stamp" || true
@@ -248,11 +287,19 @@ grt_tx_check_stale() {
       rm -f -- "$path"
       return 0
       ;;
-    SWAPPED)
+    SWAPPED|GROK_SWAPPED)
       if [[ "$GRT_TX_RECOVER" == 1 ]]; then
+        grt_di_cleanup_staging || true
         return 0
       fi
-      grt_die "incomplete transaction (state=SWAPPED stamp=${stamp:-unknown}). Run: ./restore.sh ${stamp:-}   or ./install.sh --recover"
+      grt_die "incomplete transaction (state=${state} stamp=${stamp:-unknown}). Run: ./restore.sh ${stamp:-}   or ./install.sh --recover"
+      ;;
+    BANK_PROMOTED)
+      if [[ "$GRT_TX_RECOVER" == 1 ]]; then
+        grt_di_recover_promoted || true
+        return 0
+      fi
+      grt_die "incomplete transaction (state=BANK_PROMOTED stamp=${stamp:-unknown}). Run: ./install.sh --recover"
       ;;
     *)
       grt_die "unknown transaction state: $state"
@@ -287,7 +334,14 @@ grt_tx_on_signal() {
   GRT_TX_IN_HANDLER=1
   local state
   state="$(grt_tx_state || true)"
-  if [[ "$state" == "MUTATING" || "$state" == "SWAPPED" ]]; then
+  if [[ "$state" == "BANK_STAGED" ]]; then
+    grt_di_cleanup_staging || true
+  fi
+  if [[ "$state" == "BANK_PROMOTED" ]]; then
+    grt_di_recover_promoted || true
+  fi
+  if [[ "$state" == "MUTATING" || "$state" == "SWAPPED" || "$state" == "GROK_SWAPPED" || "$state" == "BANK_PROMOTED" ]]; then
+    grt_di_cleanup_staging || true
     grt_recover_swap_old || true
     grt_restore_backup "${GRT_BACKUP_STAMP:-}" || true
   fi
@@ -669,6 +723,8 @@ grt_validate_stage() {
     || grt_die "staged Impeccable is missing Design Intelligence CLI"
   [[ -f "$stage/skills/impeccable/scripts/design_intelligence/selection.py" ]] \
     || grt_die "staged Impeccable is missing Design Intelligence runtime"
+  [[ -f "$stage/skills/impeccable/scripts/design_intelligence/bootstrap.py" ]] \
+    || grt_die "staged Impeccable is missing Design Intelligence bootstrap"
   [[ -f "$stage/skills/impeccable/design-intelligence/policy.json" ]] \
     || grt_die "staged Impeccable is missing Design Intelligence policy"
   python3 - "$stage/skills/impeccable/design-intelligence" <<'PY' \

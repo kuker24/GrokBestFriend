@@ -118,6 +118,77 @@ grt_doctor() {
     check "design bank catalogs" grt_find_design_bank
   fi
 
+  local di_cli di_report di_code di_status
+  di_cli="$GRT_SKILLS/impeccable/scripts/design-intelligence.py"
+  if [[ ! -x "$di_cli" ]]; then
+    grt_error "FAIL ENGINE_MISSING design intelligence CLI"
+    failed=1
+  elif [[ ! -f "$GRT_SKILLS/impeccable/scripts/design_intelligence/bootstrap.py" ]]; then
+    grt_error "FAIL ENGINE_MISSING design intelligence runtime"
+    failed=1
+  elif [[ ! -f "$GRT_SKILLS/impeccable/design-intelligence/policy.json" ]]; then
+    grt_error "FAIL ENGINE_MISSING design intelligence policy"
+    failed=1
+  else
+    di_report="$(mktemp)"
+    if PYTHONDONTWRITEBYTECODE=1 python3 "$di_cli" bootstrap --phase doctor-status \
+      --home "$HOME" --grok-home "$GRT_HOME" --target "${GROK_DESIGN_INTELLIGENCE_BANK:-$HOME/DesignIntelligence}" \
+      >"$di_report"; then
+      di_code="$(python3 - "$di_report" <<'PY'
+import json, sys
+from pathlib import Path
+print(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("code") or "BANK_MISSING")
+PY
+)"
+      di_status="$(python3 - "$di_report" <<'PY'
+import json, sys
+from pathlib import Path
+print(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("status") or "DEGRADED")
+PY
+)"
+      case "$di_code" in
+        BANK_MISSING)
+          grt_warn "WARN BANK_MISSING Design Intelligence bank not installed"
+          warned=1
+          if [[ "$GRT_DOCTOR_STRICT" == 1 ]] && python3 - "$GRT_MANIFEST" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+if not path.is_file():
+    raise SystemExit(1)
+data = json.loads(path.read_text(encoding="utf-8"))
+bank = ((data.get("designIntelligence") or {}).get("bank") or "")
+raise SystemExit(0 if bank == "installed" else 1)
+PY
+          then
+            grt_error "FAIL BANK_MISSING (strict): manifest recorded an installed bank"
+            failed=1
+          fi
+          ;;
+        BANK_READY_WITH_LIMITATIONS)
+          grt_warn "WARN BANK_READY_WITH_LIMITATIONS doctor=${di_status}"
+          warned=1
+          ;;
+        BANK_DEGRADED)
+          grt_warn "WARN BANK_DEGRADED"
+          warned=1
+          ;;
+        BANK_BLOCKED)
+          grt_error "FAIL BANK_BLOCKED"
+          failed=1
+          ;;
+        *)
+          grt_warn "WARN BANK_DEGRADED code=${di_code}"
+          warned=1
+          ;;
+      esac
+    else
+      grt_error "FAIL BANK_BLOCKED doctor-status"
+      failed=1
+    fi
+    rm -f -- "$di_report"
+  fi
+
   local skill
   for skill in "${GRT_SKILLS_VENDOR[@]}"; do
     check "skill $skill" test -f "$GRT_SKILLS/$skill/SKILL.md"

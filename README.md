@@ -4,15 +4,25 @@ Portable snapshot of a live GrokBuild setup: skills, routing rules, hooks, MCP, 
 
 This is not Grok itself. It installs the official Grok CLI, then layers the same system on top.
 
-**Current: v1.3.0** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB). Refero/Motionsites redistribution is **not cleared** — see `THIRD_PARTY_NOTICES.md`.
+**Current: v1.3.1** · Linux x86_64 · design bank is still the [v1.0.0](https://github.com/kuker24/GrokBestFriend/releases/tag/v1.0.0) Release asset (`Design-bank.tgz`, ~412MB). Refero/Motionsites redistribution is **not cleared** — see `THIRD_PARTY_NOTICES.md`. The repository does not redistribute Open Design packs.
 
 ## New laptop
+
+Standard install (engine + Refero/Motionsites; Design Intelligence bank stays missing):
 
 ```bash
 git clone https://github.com/kuker24/GrokBestFriend.git
 cd GrokBestFriend
 ./install.sh
 ```
+
+Full install, only if you already have the four Open Design ZIPs locally:
+
+```bash
+./install.sh --with-design-intelligence-bank ~/OpenDesignPacks
+```
+
+The folder must contain exactly one `design-systems*.zip`, `design-templates*.zip`, `plugins*.zip`, and `skills*.zip`. Automation can set `GROK_DESIGN_INTELLIGENCE_ARCHIVE_DIR` instead of the path argument. `./install.sh` without the flag does not search the home directory for those ZIPs.
 
 Then sign in:
 
@@ -21,7 +31,7 @@ grok login
 gh auth login
 ```
 
-`./install.sh` also downloads the design bank, checksums it, restores it to `~/Design`, and sets `GROK_DESIGN_BANK`. Skip that with `--skip-design-bank`.
+`./install.sh` also downloads the design bank, checksums it, restores it to `~/Design`, and sets `GROK_DESIGN_BANK`. Skip that with `--skip-design-bank`. Skip the intelligence-bank import with `--skip-design-intelligence-bank` (the default).
 
 Check:
 
@@ -73,7 +83,9 @@ https://github.com/kuker24/GrokBestFriend/releases/download/v1.0.0/Design-bank.t
 
 SHA-256 is pinned in `vendor/sources.json`. Details: [docs/design-bank.md](docs/design-bank.md).
 
-A separate **Design Intelligence** catalog (`GROK_DESIGN_INTELLIGENCE_BANK`, default `~/DesignIntelligence`) is available to Impeccable `new-work` as a bounded retrieval challenger. It is not a second primary router: narrow refinement skips it, established worlds retrieve structure only, and new/replacement worlds may retrieve at most five systems and three structures. It does not change `/found-this-design` or `~/Design`, activate ZIP specialists, or redistribute the raw packs. See [docs/design-intelligence.md](docs/design-intelligence.md).
+A separate **Design Intelligence** catalog (`GROK_DESIGN_INTELLIGENCE_BANK`, default `~/DesignIntelligence`) is available to Impeccable `new-work` as a bounded retrieval challenger. It is not a second primary router: narrow refinement skips it, established worlds retrieve structure only, and new/replacement worlds may retrieve at most five systems and three structures. It does not change `/found-this-design` or `~/Design`, activate ZIP specialists, or redistribute the raw packs.
+
+The repository does not redistribute Open Design packs. The installer only imports archives explicitly supplied by the user. A successful known-snapshot import indexes 906 catalog items and stays `DEGRADED` for unknown licenses, stubs, quarantine, and missing optional connectors. See [docs/design-intelligence.md](docs/design-intelligence.md).
 
 ## After install (human only)
 
@@ -101,7 +113,7 @@ On the source machine, after skills or rules change:
 
 Snapshot copies only the 18 official user skills. Extra live skills abort the snapshot unless you pass `--ignore-extra NAME` (they are never copied). New skills enter vendor only through the allowlist. `/to-spec` and `/to-tickets` write under `.scratch/`, which is gitignored.
 
-Install is exclusive-locked and journaled (`PREPARING` → `COMMITTED`). A leftover `SWAPPED` transaction refuses a new install; recover with `./install.sh --recover` or `./restore.sh`. Unowned `skills/implement` / `skills/code-review` (no GBF marker, not in the GBF manifest) fail the install instead of being deleted. After `main` is protected, run `./scripts/enable-main-protection.sh` anytime (repo admin); the script reconciles a single `main-ci` ruleset and fails if duplicates exist.
+Install is exclusive-locked and journaled (`PREPARING` → `BANK_STAGED` → `GROK_SWAPPED` → `BANK_PROMOTED` → `COMMITTED` when a bank is created). A leftover `SWAPPED` / `GROK_SWAPPED` / `BANK_PROMOTED` transaction refuses a new install; recover with `./install.sh --recover` or `./restore.sh`. `./restore.sh --list` says whether a backup created a Design Intelligence bank. `./uninstall.sh` keeps `~/DesignIntelligence`. Unowned `skills/implement` / `skills/code-review` (no GBF marker, not in the GBF manifest) fail the install instead of being deleted. After `main` is protected, run `./scripts/enable-main-protection.sh` anytime (repo admin); the script reconciles a single `main-ci` ruleset and fails if duplicates exist.
 
 ## macOS
 

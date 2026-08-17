@@ -31,7 +31,24 @@ if [[ "${1:-}" == "--list" ]]; then
   shopt -s nullglob
   for entry in "$root"/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z*; do
     [[ -d "$entry" ]] || continue
-    basename -- "$entry"
+    if [[ -f "$entry/journal.json" ]]; then
+      python3 - "$entry/journal.json" "$(basename -- "$entry")" <<'PY'
+import json, sys
+from pathlib import Path
+journal = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+stamp = sys.argv[2]
+di = journal.get("design_intelligence") or {}
+created = (journal.get("created_this_run") or {}).get("design_intelligence_bank")
+print(
+    f"{stamp} state={journal.get('state') or ''} "
+    f"di_action={di.get('action') or 'skip'} "
+    f"di_created={str(bool(created)).lower()} "
+    f"di_snapshot={di.get('snapshot') or '-'}"
+)
+PY
+    else
+      basename -- "$entry"
+    fi
   done
   shopt -u nullglob
   if [[ -f "$root/LATEST" ]]; then

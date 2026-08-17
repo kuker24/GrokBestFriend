@@ -25,6 +25,7 @@ Usage:
 
 Does not remove the Grok CLI, auth.json, sessions, foreign skills, or config.toml tokens.
 Does not remove ~/.grok/runtime/learning unless --purge-learning.
+Does not remove ~/DesignIntelligence; that bank is user data.
 --purge-tools also removes uv-installed serena/browser-act/semgrep if present.
 EOF
       exit 0
@@ -38,6 +39,11 @@ trap 'grt_lock_end' EXIT
 grt_tx_check_stale
 grt_backup_owned
 grt_uninstall_owned
+if [[ -d "${GROK_DESIGN_INTELLIGENCE_BANK:-$HOME/DesignIntelligence}" ]]; then
+  grt_info "Design Intelligence bank retained at ${GROK_DESIGN_INTELLIGENCE_BANK:-$HOME/DesignIntelligence} (user data)"
+else
+  grt_info "Design Intelligence bank not present; nothing to retain"
+fi
 if [[ "$purge_learning" == 1 ]]; then
   if [[ "$GRT_DRY_RUN" == 1 ]]; then
     grt_info "WOULD_PURGE learning log and hmac key"
