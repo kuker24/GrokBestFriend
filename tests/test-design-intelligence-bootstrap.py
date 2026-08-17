@@ -524,6 +524,88 @@ def test_destructive_paths_and_installer_gate(tmp: Path) -> None:
     check("design-intelligence.py bootstrap" not in skill, "Impeccable does not allow bootstrap CLI")
 
 
+def test_protected_bank_targets(tmp: Path) -> None:
+    home, grok, allowed = isolate_home(tmp / "prot")
+    archive_dir, hashes, _ = pack_dir(tmp / "prot-packs")
+    known = fixture_known(hashes)
+    repo = tmp / "gitrepo"
+    repo.mkdir()
+    (repo / ".git").mkdir()
+    real_parent = tmp / "real-parent"
+    real_parent.mkdir()
+    link_parent = home / "via-link"
+    link_parent.symlink_to(real_parent)
+    grok_subdir = grok / "runtime" / "DesignIntelligence"
+    cases = {
+        "root": Path("/"),
+        "home": home,
+        "grok home": grok,
+        "grok subdir": grok_subdir,
+        "git repo": repo / "DesignIntelligence",
+        "archive dir": archive_dir / "DesignIntelligence",
+        "symlink parent": link_parent / "DesignIntelligence",
+    }
+    for label, target in cases.items():
+        expect_error(
+            "UNSAFE_PATH",
+            f"validate refuses {label}",
+            lambda target=target: bootstrap.validate_bank_target(
+                target, home=home, grok_home=grok, archive_dir=archive_dir
+            ),
+        )
+        before_grok_runtime = (grok / "runtime").exists()
+        expect_error(
+            "UNSAFE_PATH",
+            f"dry-run refuses {label}",
+            lambda target=target: bootstrap.bootstrap(
+                archive_dir=archive_dir,
+                target=target,
+                home=home,
+                grok_home=grok,
+                known=known,
+                dry_run=True,
+                allowlist_path=ROOT / "vendor/skill-allowlist.txt",
+            ),
+        )
+        check(not list(home.glob("DesignIntelligence.stage.*")), f"dry-run {label} left no staging")
+        check(not (repo / "DesignIntelligence").exists(), f"dry-run {label} did not create repo bank")
+        check(not (archive_dir / "DesignIntelligence").exists(), f"dry-run {label} did not create archive bank")
+        check(not (real_parent / "DesignIntelligence").exists(), f"dry-run {label} did not follow symlink parent")
+        check(
+            (grok / "runtime").exists() == before_grok_runtime,
+            f"dry-run {label} did not mkdir grok runtime",
+        )
+
+    ok = bootstrap.validate_bank_target(allowed, home=home, grok_home=grok, archive_dir=archive_dir)
+    check(ok == allowed.resolve(), "default home bank target remains allowed")
+
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    env["GRT_HOME"] = str(grok)
+    env["GROK_DESIGN_INTELLIGENCE_BANK"] = str(grok / "runtime" / "DesignIntelligence")
+    env["GROK_DI_INSTALLER"] = "1"
+    proc = subprocess.run(
+        [
+            str(ROOT / "install.sh"),
+            "--dry-run",
+            "--skip-tools",
+            "--skip-design-bank",
+            "--with-design-intelligence-bank",
+            str(archive_dir),
+        ],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    check(proc.returncode != 0, "installer dry-run refuses grok-hosted bank")
+    check(
+        "UNSAFE_PATH" in (proc.stderr + proc.stdout),
+        "installer dry-run reports UNSAFE_PATH for grok-hosted bank",
+    )
+    check(not (grok / "runtime").exists(), "installer dry-run did not create grok runtime")
+
+
 def test_stage_runs_search(tmp: Path) -> None:
     home, grok, target = isolate_home(tmp / "stage-search")
     archive_dir, hashes, _ = pack_dir(tmp / "stage-search-packs")
@@ -574,6 +656,7 @@ def main() -> int:
         test_existing_and_symlink(tmp)
         test_dry_run_and_recover(tmp)
         test_destructive_paths_and_installer_gate(tmp)
+        test_protected_bank_targets(tmp)
         test_stage_runs_search(tmp)
         test_installer_cli_contract()
         test_uninstall_retains_bank(tmp)

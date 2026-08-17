@@ -58,7 +58,10 @@ invoke bootstrap. Staging lives at `~/DesignIntelligence.stage.<id>`
 with a private transaction marker. Recovery of a crash reloads that
 state from the installer journal in a new process. Search verification
 runs against the staged catalog before the atomic rename. Dry-run
-never creates the target parent or a staging directory.
+never creates the target parent or a staging directory. The bank
+target cannot be `/`, `$HOME`, `~/.grok` or anything inside it, a Git
+repository, the archive directory, or a path that reaches those
+locations through a symlink.
 
 ## Trust, license, evidence
 

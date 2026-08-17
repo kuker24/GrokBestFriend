@@ -360,11 +360,94 @@ def is_inside(path: Path, root: Path) -> bool:
 
 
 def is_inside_git_repo(path: Path) -> bool:
-    current = path.resolve()
+    current = path.expanduser()
+    try:
+        current = current.resolve()
+    except OSError:
+        pass
     for parent in (current, *current.parents):
         if (parent / ".git").exists():
             return True
     return False
+
+
+def _has_untrusted_symlink(path: Path) -> bool:
+    current = path.expanduser()
+    for _ in range(64):
+        try:
+            if current.is_symlink():
+                return True
+        except OSError:
+            return True
+        if current.parent == current:
+            return False
+        current = current.parent
+    return True
+
+
+def _paths_overlap(left: Path, right: Path) -> bool:
+    try:
+        left_r = left.expanduser().resolve()
+        right_r = right.expanduser().resolve()
+    except OSError:
+        left_r = left.expanduser()
+        right_r = right.expanduser()
+    if left_r == right_r:
+        return True
+    try:
+        left_r.relative_to(right_r)
+        return True
+    except ValueError:
+        pass
+    try:
+        right_r.relative_to(left_r)
+        return True
+    except ValueError:
+        return False
+
+
+def validate_bank_target(
+    target: Path,
+    *,
+    home: Path,
+    grok_home: Path,
+    archive_dir: Path | str | None = None,
+) -> Path:
+    raw = str(target)
+    if not raw or raw in {".", ".."} or has_control_chars(raw) or contains_glob(raw):
+        raise BootstrapError("UNSAFE_PATH", "bank target is not trusted")
+    expanded = Path(raw).expanduser()
+    if expanded == Path("/") or str(expanded) == "/":
+        raise BootstrapError("UNSAFE_PATH", "refusing protected path")
+    if _has_untrusted_symlink(expanded):
+        raise BootstrapError("UNSAFE_PATH", "target or parent is a symlink")
+    try:
+        resolved = expanded.resolve()
+    except OSError as exc:
+        raise BootstrapError("UNSAFE_PATH", f"cannot resolve bank target: {exc}") from exc
+    if resolved == Path("/") or str(resolved) == "/":
+        raise BootstrapError("UNSAFE_PATH", "refusing protected path")
+    home_r = _home_resolved(home)
+    if resolved == home_r:
+        raise BootstrapError("UNSAFE_PATH", "refusing to use home as the bank")
+    grok_candidates = [grok_home.expanduser()]
+    implicit = home.expanduser() / ".grok"
+    if implicit not in grok_candidates:
+        grok_candidates.append(implicit)
+    for grok in grok_candidates:
+        try:
+            grok_r = grok.resolve()
+        except OSError:
+            grok_r = grok
+        if resolved == grok_r or is_inside(resolved, grok_r):
+            raise BootstrapError("UNSAFE_PATH", "refusing to place the bank inside ~/.grok")
+    if is_inside_git_repo(resolved) or is_inside_git_repo(expanded):
+        raise BootstrapError("UNSAFE_PATH", "refusing to place the bank inside a git repository")
+    if archive_dir is not None and str(archive_dir).strip():
+        archive = Path(str(archive_dir))
+        if _paths_overlap(resolved, archive) or _paths_overlap(expanded, archive):
+            raise BootstrapError("UNSAFE_PATH", "bank target overlaps the archive directory")
+    return resolved
 
 
 def default_bank_target(home: Path | None = None, env: dict[str, str] | None = None) -> Path:
@@ -818,7 +901,16 @@ def import_into_staging(
     }
 
 
-def promote_staging(staging: Path, target: Path, *, home: Path, transaction_id: str | None = None) -> Path:
+def promote_staging(
+    staging: Path,
+    target: Path,
+    *,
+    home: Path,
+    grok_home: Path,
+    archive_dir: Path | str | None = None,
+    transaction_id: str | None = None,
+) -> Path:
+    validate_bank_target(target, home=home, grok_home=grok_home, archive_dir=archive_dir)
     if target.exists() or target.is_symlink():
         raise BootstrapError("EXISTING_BANK_CONFLICT", "refusing to overwrite target")
     stage = assert_staging_namespace(staging, home, transaction_id=transaction_id)
@@ -978,7 +1070,9 @@ def preflight(
     known: dict[str, Any],
     allowlist_path: Path | None = None,
 ) -> dict[str, Any]:
+    validate_bank_target(target, home=home, grok_home=grok_home, archive_dir=archive_dir)
     directory = validate_archive_dir(str(archive_dir), grok_home=grok_home, bank_target=target, home=home)
+    validate_bank_target(target, home=home, grok_home=grok_home, archive_dir=directory)
     found = discover_archives(directory)
     rows = inspect_discovered(found, policy, taxonomy)
     snapshot = require_known_snapshot(rows, known)
@@ -1208,7 +1302,14 @@ def bootstrap(
 
     if phase in {"all", "promote"}:
         search = verify_search(stage_path, policy, allowlist_path=allow)
-        promote_staging(stage_path, target_path, home=home_path, transaction_id=transaction_id or tx_id)
+        promote_staging(
+            stage_path,
+            target_path,
+            home=home_path,
+            grok_home=grok_path,
+            archive_dir=Path(archive_dir) if archive_dir else None,
+            transaction_id=transaction_id or tx_id,
+        )
 
     counts = imported.get("counts") if imported else (catalog._counts(catalog.load_items(target_path, policy)))
     generation_id = imported.get("generation_id") if imported else (catalog.read_lock(target_path) or {}).get("generation_id")
