@@ -167,7 +167,7 @@ grt_tx_write_journal() {
     "${GRT_RC_PATH:-}" \
     "${GRT_DI_ACTION:-skip}" "${GRT_DI_CREATED:-0}" "${GRT_DI_STAGING:-}" \
     "${GRT_DI_TARGET_DISPLAY:-~/DesignIntelligence}" "${GRT_DI_RECOVERY:-}" \
-    "${GRT_DI_SNAPSHOT:-}" "${HOME}" <<'PY'
+    "${GRT_DI_SNAPSHOT:-}" "${HOME}" "${GRT_DI_TARGET:-}" "${GRT_DI_TX_ID:-}" <<'PY'
 import json, sys
 from pathlib import Path
 
@@ -179,6 +179,7 @@ created_path, created_export, created_bank = sys.argv[10], sys.argv[11], sys.arg
 rc_path = sys.argv[13]
 di_action, di_created, di_staging = sys.argv[14], sys.argv[15], sys.argv[16]
 di_target, di_recovery, di_snapshot, home_user = sys.argv[17], sys.argv[18], sys.argv[19], sys.argv[20]
+di_target_path, di_tx_id = sys.argv[21], sys.argv[22]
 chromium = home / "bin" / "grok-chromium-cdp"
 config = home / "config.toml"
 learning = home / "runtime" / "learning" / "events.jsonl"
@@ -205,10 +206,12 @@ payload = {
     "design_intelligence": {
         "action": di_action,
         "created_this_run": di_created == "1",
-        "staging": di_staging,
+        "staging": di_staging or None,
         "target": di_target,
-        "recovery": di_recovery,
+        "target_path": di_target_path or None,
+        "recovery": di_recovery or None,
         "snapshot": di_snapshot or None,
+        "transaction_id": di_tx_id or None,
     },
 }
 dest.parent.mkdir(parents=True, exist_ok=True)
@@ -222,7 +225,8 @@ grt_tx_update_created() {
   [[ -f "$dest" ]] || return 0
   python3 - "$dest" "$GRT_CREATED_PATH_MARKER" "$GRT_CREATED_DESIGN_BANK_EXPORT" "$GRT_CREATED_DESIGN_BANK" "${GRT_RC_PATH:-}" \
     "${GRT_DI_ACTION:-skip}" "${GRT_DI_CREATED:-0}" "${GRT_DI_STAGING:-}" \
-    "${GRT_DI_TARGET_DISPLAY:-~/DesignIntelligence}" "${GRT_DI_RECOVERY:-}" "${GRT_DI_SNAPSHOT:-}" <<'PY'
+    "${GRT_DI_TARGET_DISPLAY:-~/DesignIntelligence}" "${GRT_DI_RECOVERY:-}" "${GRT_DI_SNAPSHOT:-}" \
+    "${GRT_DI_TARGET:-}" "${GRT_DI_TX_ID:-}" <<'PY'
 import json, sys
 from pathlib import Path
 path = Path(sys.argv[1])
@@ -241,6 +245,8 @@ data["design_intelligence"] = {
     "target": sys.argv[9],
     "recovery": sys.argv[10] or None,
     "snapshot": sys.argv[11] or None,
+    "target_path": sys.argv[12] or None,
+    "transaction_id": sys.argv[13] or None,
 }
 path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 PY
@@ -257,6 +263,45 @@ grt_tx_clear() {
   rm -f -- "$(grt_tx_path)"
 }
 
+grt_tx_load_di_state() {
+  local path meta
+  path="$(grt_tx_path)"
+  [[ -f "$path" ]] || return 0
+  if ! meta="$(python3 - "$GRT_ROOT/lib" "$path" "$HOME" <<'PY'
+import sys
+from pathlib import Path
+
+sys.path.insert(0, sys.argv[1])
+from design_intelligence.bootstrap import load_journal_di_state
+
+state = load_journal_di_state(Path(sys.argv[2]), home=Path(sys.argv[3]))
+
+def emit(value: object) -> None:
+    print("" if value is None else str(value))
+
+emit(state.get("action") or "skip")
+emit("1" if state.get("created") else "0")
+emit(state.get("staging") or "")
+emit(state.get("target_path") or "")
+emit(state.get("target_display") or "~/DesignIntelligence")
+emit(state.get("recovery") or "")
+emit(state.get("snapshot") or "")
+emit(state.get("transaction_id") or "")
+PY
+)"; then
+    grt_warn "Design Intelligence journal state ignored"
+    return 0
+  fi
+  GRT_DI_ACTION="$(printf '%s\n' "$meta" | sed -n '1p')"
+  GRT_DI_CREATED="$(printf '%s\n' "$meta" | sed -n '2p')"
+  GRT_DI_STAGING="$(printf '%s\n' "$meta" | sed -n '3p')"
+  GRT_DI_TARGET="$(printf '%s\n' "$meta" | sed -n '4p')"
+  GRT_DI_TARGET_DISPLAY="$(printf '%s\n' "$meta" | sed -n '5p')"
+  GRT_DI_RECOVERY="$(printf '%s\n' "$meta" | sed -n '6p')"
+  GRT_DI_SNAPSHOT="$(printf '%s\n' "$meta" | sed -n '7p')"
+  GRT_DI_TX_ID="$(printf '%s\n' "$meta" | sed -n '8p')"
+}
+
 grt_tx_check_stale() {
   if [[ "$GRT_DRY_RUN" == 1 ]]; then
     return 0
@@ -264,6 +309,7 @@ grt_tx_check_stale() {
   local path state stamp
   path="$(grt_tx_path)"
   [[ -f "$path" ]] || return 0
+  grt_tx_load_di_state
   state="$(grt_tx_state)"
   stamp="$(grt_tx_stamp)"
   case "$state" in
@@ -289,6 +335,7 @@ grt_tx_check_stale() {
       ;;
     SWAPPED|GROK_SWAPPED)
       if [[ "$GRT_TX_RECOVER" == 1 ]]; then
+        grt_di_recover_promoted || true
         grt_di_cleanup_staging || true
         return 0
       fi
@@ -333,11 +380,12 @@ grt_tx_on_signal() {
   fi
   GRT_TX_IN_HANDLER=1
   local state
+  grt_tx_load_di_state || true
   state="$(grt_tx_state || true)"
   if [[ "$state" == "BANK_STAGED" ]]; then
     grt_di_cleanup_staging || true
   fi
-  if [[ "$state" == "BANK_PROMOTED" ]]; then
+  if [[ "$state" == "BANK_PROMOTED" || "$state" == "GROK_SWAPPED" || "$state" == "SWAPPED" ]]; then
     grt_di_recover_promoted || true
   fi
   if [[ "$state" == "MUTATING" || "$state" == "SWAPPED" || "$state" == "GROK_SWAPPED" || "$state" == "BANK_PROMOTED" ]]; then

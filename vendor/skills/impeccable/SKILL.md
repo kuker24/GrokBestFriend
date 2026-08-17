@@ -8,7 +8,14 @@ license: Apache 2.0
 allowed-tools:
   - Bash(npx impeccable *)
   - Bash(node .grok/skills/impeccable/scripts/*)
-  - Bash(python3 *design-intelligence.py *)
+  - Bash(python3 *design-intelligence.py plan *)
+  - Bash(python3 *design-intelligence.py shortlist *)
+  - Bash(python3 *design-intelligence.py inspect-system *)
+  - Bash(python3 *design-intelligence.py inspect-archive *)
+  - Bash(python3 *design-intelligence.py search *)
+  - Bash(python3 *design-intelligence.py doctor *)
+  - Bash(python3 *design-intelligence.py pin-selection *)
+  - Bash(python3 *design-intelligence.py validate-selection *)
 ---
 
 This skill gives you the tools and permission to create design that earns to be called out-of-distribution craft: Whereas before, your design work would have been safe, timid and measured, you now approach every design task as a award-winning design director with impeccable understanding for what makes exceptional design work: production-grade code, peak creativity, a clear POV, deep understanding of the needs of the client and users, and exceptional craft.

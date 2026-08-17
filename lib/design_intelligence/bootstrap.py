@@ -44,6 +44,14 @@ IMPORT_ORDER = ("systems", "templates", "plugins", "skills")
 CATALOG_OVERHEAD_BYTES = 64 * 1024 * 1024
 SAFETY_MARGIN = 0.20
 GLOB_CHARS = set("*?[]")
+TX_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$")
+STAGE_NAME_RE = re.compile(r"^DesignIntelligence\.stage\.([A-Za-z0-9][A-Za-z0-9._-]{0,80})$")
+RECOVERY_NAME_RE = re.compile(r"^DesignIntelligence\.recovery\.([A-Za-z0-9][A-Za-z0-9._-]{0,80})$")
+TRANSACTION_MARKER = ".grokbestfriend-di-transaction.json"
+MARKER_KIND_STAGE = "design-intelligence-stage"
+MARKER_KIND_BANK = "design-intelligence-bank"
+INSTALLER_ENV = "GROK_DI_INSTALLER"
+INSTALLER_PHASES = frozenset({"all", "stage", "promote", "remove-staging", "recover-created"})
 
 
 class BootstrapError(ValueError):
@@ -95,6 +103,252 @@ def has_control_chars(value: str) -> bool:
 
 def contains_glob(value: str) -> bool:
     return any(ch in GLOB_CHARS for ch in value)
+
+
+def installer_mutation_allowed(allow_mutation: bool | None = None) -> bool:
+    if allow_mutation is True:
+        return True
+    if allow_mutation is False:
+        return False
+    return os.environ.get(INSTALLER_ENV) == "1"
+
+
+def require_installer_phase(phase: str, *, dry_run: bool = False, allow_mutation: bool | None = None) -> None:
+    if dry_run or phase not in INSTALLER_PHASES:
+        return
+    if not installer_mutation_allowed(allow_mutation):
+        raise BootstrapError("UNSAFE_PATH", "installer-only bootstrap phase")
+
+
+def validate_transaction_id(transaction_id: str) -> str:
+    if not transaction_id or has_control_chars(transaction_id) or contains_glob(transaction_id):
+        raise BootstrapError("UNSAFE_PATH", "transaction id is not trusted")
+    if "/" in transaction_id or "\\" in transaction_id or ".." in transaction_id:
+        raise BootstrapError("UNSAFE_PATH", "transaction id is not trusted")
+    if not TX_ID_RE.fullmatch(transaction_id):
+        raise BootstrapError("UNSAFE_PATH", "transaction id is not trusted")
+    return transaction_id
+
+
+def _home_resolved(home: Path) -> Path:
+    return home.expanduser().resolve()
+
+
+def assert_not_protected(path: Path, *, home: Path, grok_home: Path | None = None, target: Path | None = None) -> None:
+    resolved = path.expanduser()
+    if resolved.exists() or resolved.is_symlink():
+        resolved = resolved.resolve()
+    home_r = _home_resolved(home)
+    if resolved == Path("/") or str(resolved) == "/":
+        raise BootstrapError("UNSAFE_PATH", "refusing protected path")
+    if resolved == home_r:
+        raise BootstrapError("UNSAFE_PATH", "refusing to touch home")
+    if grok_home is not None:
+        grok_r = grok_home.expanduser().resolve()
+        if resolved == grok_r or is_inside(resolved, grok_r):
+            raise BootstrapError("UNSAFE_PATH", "refusing to touch ~/.grok")
+    if target is not None:
+        target_r = target.expanduser()
+        if target_r.exists() or target_r.is_symlink():
+            target_r = target_r.resolve()
+        if resolved == target_r:
+            raise BootstrapError("UNSAFE_PATH", "refusing to treat the target bank as staging")
+
+
+def write_transaction_marker(
+    directory: Path,
+    *,
+    kind: str,
+    transaction_id: str,
+    home: Path,
+    target: Path,
+) -> None:
+    payload = {
+        "kind": kind,
+        "transaction_id": validate_transaction_id(transaction_id),
+        "target": tilde_display(target, home),
+    }
+    path = directory / TRANSACTION_MARKER
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.chmod(path, 0o600)
+
+
+def read_transaction_marker(directory: Path) -> dict[str, Any]:
+    path = directory / TRANSACTION_MARKER
+    if path.is_symlink() or not path.is_file():
+        raise BootstrapError("UNSAFE_PATH", "missing transaction marker")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise BootstrapError("UNSAFE_PATH", "transaction marker is not valid JSON") from exc
+    if not isinstance(data, dict):
+        raise BootstrapError("UNSAFE_PATH", "transaction marker is not an object")
+    tx = str(data.get("transaction_id") or "")
+    validate_transaction_id(tx)
+    kind = str(data.get("kind") or "")
+    if kind not in {MARKER_KIND_STAGE, MARKER_KIND_BANK}:
+        raise BootstrapError("UNSAFE_PATH", "transaction marker kind mismatch")
+    return data
+
+
+def assert_staging_namespace(
+    staging: Path,
+    home: Path,
+    *,
+    transaction_id: str | None = None,
+    require_marker: bool | None = None,
+) -> Path:
+    if has_control_chars(str(staging)) or contains_glob(str(staging)):
+        raise BootstrapError("UNSAFE_PATH", "staging path is not trusted")
+    if staging.is_symlink():
+        raise BootstrapError("UNSAFE_PATH", "staging is a symlink")
+    home_r = _home_resolved(home)
+    if staging.parent.resolve() != home_r:
+        raise BootstrapError("UNSAFE_PATH", "staging parent must be home")
+    match = STAGE_NAME_RE.fullmatch(staging.name)
+    if not match:
+        raise BootstrapError("UNSAFE_PATH", "staging name is not in the staging namespace")
+    tx = validate_transaction_id(match.group(1))
+    if transaction_id and validate_transaction_id(transaction_id) != tx:
+        raise BootstrapError("UNSAFE_PATH", "staging transaction id mismatch")
+    assert_not_protected(staging, home=home)
+    expected = home_r / staging.name
+    if not staging.exists():
+        return staging
+    if not staging.is_dir() or staging.is_symlink():
+        raise BootstrapError("UNSAFE_PATH", "staging is not a regular directory")
+    if staging.resolve() != expected:
+        raise BootstrapError("UNSAFE_PATH", "staging escaped namespace")
+    if is_inside_git_repo(staging) and not is_inside_git_repo(home_r):
+        raise BootstrapError("UNSAFE_PATH", "staging is inside a git repository")
+    if require_marker is False:
+        return staging
+    marker = read_transaction_marker(staging)
+    if marker.get("transaction_id") != tx:
+        raise BootstrapError("UNSAFE_PATH", "transaction marker mismatch")
+    return staging
+
+
+def assert_recovery_namespace(recovery: Path, home: Path, *, must_not_exist: bool = True) -> Path:
+    if has_control_chars(str(recovery)) or contains_glob(str(recovery)):
+        raise BootstrapError("UNSAFE_PATH", "recovery path is not trusted")
+    if recovery.is_symlink():
+        raise BootstrapError("UNSAFE_PATH", "recovery is a symlink")
+    home_r = _home_resolved(home)
+    if recovery.parent.resolve() != home_r:
+        raise BootstrapError("UNSAFE_PATH", "recovery parent must be home")
+    match = RECOVERY_NAME_RE.fullmatch(recovery.name)
+    if not match:
+        raise BootstrapError("UNSAFE_PATH", "recovery name is not in the recovery namespace")
+    validate_transaction_id(match.group(1))
+    assert_not_protected(recovery, home=home)
+    if must_not_exist and (recovery.exists() or recovery.is_symlink()):
+        raise BootstrapError("UNSAFE_PATH", "recovery path already exists")
+    return recovery
+
+
+def nearest_existing_dir(path: Path) -> Path:
+    current = path.expanduser()
+    for _ in range(64):
+        if current.exists():
+            if current.is_symlink():
+                raise BootstrapError("UNSAFE_PATH", "disk parent is a symlink")
+            if current.is_dir():
+                return current.resolve()
+            current = current.parent
+            continue
+        if current.parent == current:
+            raise BootstrapError("UNSAFE_PATH", "no existing disk parent")
+        current = current.parent
+    raise BootstrapError("UNSAFE_PATH", "no existing disk parent")
+
+
+def load_journal_di_state(journal: Path, *, home: Path) -> dict[str, Any]:
+    if journal.is_symlink() or not journal.is_file():
+        return {
+            "action": "skip",
+            "created": False,
+            "staging": "",
+            "target_path": "",
+            "target_display": "~/DesignIntelligence",
+            "recovery": "",
+            "snapshot": "",
+            "transaction_id": "",
+        }
+    try:
+        data = json.loads(journal.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {
+            "action": "skip",
+            "created": False,
+            "staging": "",
+            "target_path": "",
+            "target_display": "~/DesignIntelligence",
+            "recovery": "",
+            "snapshot": "",
+            "transaction_id": "",
+        }
+    if not isinstance(data, dict):
+        raise BootstrapError("UNSAFE_PATH", "transaction journal is not an object")
+    di = data.get("design_intelligence") if isinstance(data.get("design_intelligence"), dict) else {}
+    created_block = data.get("created_this_run") if isinstance(data.get("created_this_run"), dict) else {}
+    created = bool(created_block.get("design_intelligence_bank") or di.get("created_this_run"))
+    action = str(di.get("action") or "skip")
+    if action not in {"skip", "create", "reuse"}:
+        action = "skip"
+    snapshot = str(di.get("snapshot") or "")
+    if snapshot and (has_control_chars(snapshot) or contains_glob(snapshot)):
+        snapshot = ""
+    tx = str(di.get("transaction_id") or "")
+    if tx:
+        try:
+            tx = validate_transaction_id(tx)
+        except BootstrapError:
+            tx = ""
+    staging = ""
+    raw_staging = di.get("staging")
+    if raw_staging:
+        try:
+            staging_path = assert_staging_namespace(Path(str(raw_staging)), home, transaction_id=tx or None)
+            staging = str(staging_path)
+        except BootstrapError:
+            staging = ""
+    recovery = ""
+    raw_recovery = di.get("recovery")
+    if raw_recovery:
+        try:
+            recovery_path = assert_recovery_namespace(Path(str(raw_recovery)), home, must_not_exist=False)
+            recovery = str(recovery_path)
+        except BootstrapError:
+            recovery = ""
+    display = str(di.get("target") or "~/DesignIntelligence")
+    if has_control_chars(display) or contains_glob(display) or display.startswith("/"):
+        display = "~/DesignIntelligence"
+    target_path = ""
+    raw_target = di.get("target_path") or ""
+    if raw_target:
+        candidate = Path(str(raw_target)).expanduser()
+        try:
+            if has_control_chars(str(raw_target)) or contains_glob(str(raw_target)):
+                raise BootstrapError("UNSAFE_PATH", "target path is not trusted")
+            assert_not_protected(candidate, home=home)
+            if candidate.is_symlink():
+                raise BootstrapError("UNSAFE_PATH", "target bank is a symlink")
+            target_path = str(candidate)
+        except BootstrapError:
+            target_path = ""
+    if not target_path and display.startswith("~/"):
+        target_path = str(expand_tilde(display, home))
+    return {
+        "action": action,
+        "created": created,
+        "staging": staging,
+        "target_path": target_path,
+        "target_display": display,
+        "recovery": recovery,
+        "snapshot": snapshot,
+        "transaction_id": tx,
+    }
 
 
 def is_inside(path: Path, root: Path) -> bool:
@@ -300,11 +554,11 @@ def disk_preflight(
 ) -> dict[str, int]:
     compressed = sum(row.compressed_bytes for row in rows)
     uncompressed = sum(row.uncompressed_bytes for row in rows)
-    staging_parent.mkdir(parents=True, exist_ok=True)
-    target_parent.mkdir(parents=True, exist_ok=True)
-    if os.stat(staging_parent).st_dev != os.stat(target_parent).st_dev:
+    staging_probe = nearest_existing_dir(staging_parent)
+    target_probe = nearest_existing_dir(target_parent)
+    if os.stat(staging_probe).st_dev != os.stat(target_probe).st_dev:
         raise BootstrapError("INSUFFICIENT_DISK_SPACE", "staging and target are on different filesystems")
-    usage = os.statvfs(str(target_parent))
+    usage = os.statvfs(str(target_probe))
     available = usage.f_bavail * usage.f_frsize
     base = uncompressed + CATALOG_OVERHEAD_BYTES
     required = int(base + base * SAFETY_MARGIN)
@@ -408,19 +662,26 @@ def evaluate_existing_bank(
 
 
 def prepare_staging(home: Path, transaction_id: str, target: Path) -> Path:
-    if has_control_chars(transaction_id) or contains_glob(transaction_id) or "/" in transaction_id:
-        raise BootstrapError("UNSAFE_PATH", "transaction id is not trusted")
-    staging = home / f"DesignIntelligence.stage.{transaction_id}"
+    tx = validate_transaction_id(transaction_id)
+    staging = home / f"DesignIntelligence.stage.{tx}"
+    assert_staging_namespace(staging, home, transaction_id=tx, require_marker=False)
     if staging.exists() or staging.is_symlink():
         raise BootstrapError("UNSAFE_PATH", "staging path already exists")
     if is_inside_git_repo(home):
         raise BootstrapError("UNSAFE_PATH", "refusing to stage a bank inside a git repository")
-    if is_inside(staging, target):
+    if target.exists() and is_inside(staging, target):
         raise BootstrapError("UNSAFE_PATH", "staging would sit inside the target bank")
     staging.mkdir(mode=0o700)
     if staging.is_symlink() or not staging.is_dir():
         raise BootstrapError("UNSAFE_PATH", "staging is not a regular directory")
     os.chmod(staging, 0o700)
+    write_transaction_marker(
+        staging,
+        kind=MARKER_KIND_STAGE,
+        transaction_id=tx,
+        home=home,
+        target=target,
+    )
     return staging
 
 
@@ -557,43 +818,75 @@ def import_into_staging(
     }
 
 
-def promote_staging(staging: Path, target: Path) -> Path:
+def promote_staging(staging: Path, target: Path, *, home: Path, transaction_id: str | None = None) -> Path:
     if target.exists() or target.is_symlink():
         raise BootstrapError("EXISTING_BANK_CONFLICT", "refusing to overwrite target")
-    if staging.is_symlink() or not staging.is_dir():
+    stage = assert_staging_namespace(staging, home, transaction_id=transaction_id)
+    if stage.is_symlink() or not stage.is_dir():
         raise BootstrapError("UNSAFE_PATH", "staging is not a regular directory")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if os.stat(staging).st_dev != os.stat(target.parent).st_dev:
+    target_parent = target.parent
+    if not target_parent.exists():
+        target_parent.mkdir(parents=True, exist_ok=True)
+    if target_parent.is_symlink() or not target_parent.is_dir():
+        raise BootstrapError("UNSAFE_PATH", "target parent is not a regular directory")
+    if os.stat(stage).st_dev != os.stat(target_parent).st_dev:
         raise BootstrapError("ATOMIC_PROMOTION_FAILURE", "cannot rename across filesystems")
     try:
-        os.rename(staging, target)
+        os.rename(stage, target)
     except OSError as exc:
         raise BootstrapError("ATOMIC_PROMOTION_FAILURE", str(exc)) from exc
     if target.is_symlink():
         raise BootstrapError("ATOMIC_PROMOTION_FAILURE", "promoted target is a symlink")
     os.chmod(target, 0o700)
+    marker = read_transaction_marker(target)
+    write_transaction_marker(
+        target,
+        kind=MARKER_KIND_BANK,
+        transaction_id=str(marker.get("transaction_id") or transaction_id or ""),
+        home=home,
+        target=target,
+    )
     return target
 
 
-def recover_created_bank(target: Path, recovery: Path) -> dict[str, str]:
+def recover_created_bank(
+    target: Path,
+    recovery: Path,
+    *,
+    home: Path,
+    transaction_id: str | None = None,
+    grok_home: Path | None = None,
+) -> dict[str, str]:
     if target.is_symlink():
         raise BootstrapError("UNSAFE_PATH", "refusing to touch a symlink bank")
+    assert_not_protected(target, home=home, grok_home=grok_home)
+    dest = assert_recovery_namespace(recovery, home, must_not_exist=True)
     if not target.exists():
         return {"action": "none"}
-    if recovery.exists() or recovery.is_symlink():
-        raise BootstrapError("UNSAFE_PATH", "recovery path already exists")
-    recovery.parent.mkdir(parents=True, exist_ok=True)
-    os.rename(target, recovery)
+    if not target.is_dir():
+        raise BootstrapError("UNSAFE_PATH", "target exists and is not a directory")
+    marker = read_transaction_marker(target)
+    if transaction_id and str(marker.get("transaction_id") or "") != validate_transaction_id(transaction_id):
+        raise BootstrapError("UNSAFE_PATH", "recovery transaction marker mismatch")
+    if dest.parent.resolve() != _home_resolved(home):
+        raise BootstrapError("UNSAFE_PATH", "recovery parent must be home")
+    if os.stat(target).st_dev != os.stat(dest.parent).st_dev:
+        raise BootstrapError("ATOMIC_PROMOTION_FAILURE", "cannot rename across filesystems")
+    os.rename(target, dest)
     return {"action": "moved"}
 
 
-def remove_staging(staging: Path) -> None:
-    if not staging.exists():
+def remove_staging(staging: Path, *, home: Path, transaction_id: str | None = None) -> None:
+    stage = assert_staging_namespace(staging, home, transaction_id=transaction_id)
+    if not stage.exists():
         return
-    if staging.is_symlink():
-        staging.unlink()
-        return
-    shutil.rmtree(staging)
+    if stage.is_symlink() or not stage.is_dir():
+        raise BootstrapError("UNSAFE_PATH", "staging is not a regular directory")
+    if stage.resolve().parent != _home_resolved(home):
+        raise BootstrapError("UNSAFE_PATH", "staging escaped home")
+    if stage.resolve() in {_home_resolved(home), Path("/")}:
+        raise BootstrapError("UNSAFE_PATH", "refusing protected path")
+    shutil.rmtree(stage)
 
 
 def verify_search(
@@ -735,8 +1028,10 @@ def bootstrap(
     known: dict[str, Any] | None = None,
     allowlist_path: Path | None = None,
     emit: Callable[[str], None] | None = None,
+    allow_mutation: bool | None = None,
 ) -> dict[str, Any]:
     talk = emit or (lambda _line: None)
+    require_installer_phase(phase, dry_run=dry_run, allow_mutation=allow_mutation)
     home_path = (home or Path.home()).expanduser()
     grok_path = (grok_home or (home_path / ".grok")).expanduser()
     target_path = (target or default_bank_target(home_path)).expanduser()
@@ -744,7 +1039,7 @@ def bootstrap(
     taxonomy = taxonomy or policy_mod.load_taxonomy()
     known = known or policy_mod.load_known_sources()
     allow = allowlist_path or (policy_mod.vendor_dir() / "skill-allowlist.txt")
-    tx_id = transaction_id or new_transaction_id()
+    tx_id = validate_transaction_id(transaction_id) if transaction_id else new_transaction_id()
 
     if phase == "doctor-status":
         if not target_path.exists():
@@ -763,13 +1058,19 @@ def bootstrap(
     if phase == "recover-created":
         if staging is None:
             raise BootstrapError("UNSAFE_PATH", "recovery path required")
-        moved = recover_created_bank(target_path, staging)
+        moved = recover_created_bank(
+            target_path,
+            staging,
+            home=home_path,
+            transaction_id=transaction_id,
+            grok_home=grok_path,
+        )
         return {"status": "ok", "recovery": tilde_display(staging, home_path), **moved}
 
     if phase == "remove-staging":
         if staging is None:
             raise BootstrapError("UNSAFE_PATH", "staging path required")
-        remove_staging(staging)
+        remove_staging(staging, home=home_path, transaction_id=transaction_id)
         return {"status": "ok"}
 
     prepared = preflight(
@@ -825,9 +1126,11 @@ def bootstrap(
             "target": tilde_display(target_path, home_path),
         }
 
-    if action == "reuse":
+    if action == "reuse" or phase == "verify-search":
+        if action != "reuse" and phase == "verify-search":
+            raise BootstrapError("EXISTING_BANK_CONFLICT", "verify-search requires a reusable bank")
         existing = prepared["existing"]
-        search = verify_search(target_path, policy, allowlist_path=allow) if phase in {"all", "verify-search"} else {}
+        search = verify_search(target_path, policy, allowlist_path=allow)
         return {
             "status": "ok",
             "action": "reuse",
@@ -853,8 +1156,16 @@ def bootstrap(
     if phase == "existing":
         return {"status": "ok", "action": action, "snapshot": snapshot_id}
 
-    stage_path = staging or prepare_staging(home_path, tx_id, target_path)
+    if phase == "promote":
+        if staging is None:
+            raise BootstrapError("UNSAFE_PATH", "staging path required")
+        stage_path = assert_staging_namespace(staging, home_path, transaction_id=transaction_id)
+    else:
+        stage_path = staging or prepare_staging(home_path, tx_id, target_path)
+        if staging is not None:
+            stage_path = assert_staging_namespace(staging, home_path, transaction_id=transaction_id)
     imported: dict[str, Any] = {}
+    search: dict[str, Any] = {}
     if phase in {"all", "stage"}:
         try:
             imported = import_into_staging(
@@ -867,9 +1178,10 @@ def bootstrap(
                 allowlist_path=allow,
                 home=home_path,
             )
+            search = verify_search(stage_path, policy, allowlist_path=allow)
         except Exception:
             if staging is None:
-                remove_staging(stage_path)
+                remove_staging(stage_path, home=home_path, transaction_id=tx_id)
             raise
         if phase == "stage":
             return {
@@ -880,15 +1192,23 @@ def bootstrap(
                 "snapshot": snapshot_id,
                 "generation_id": imported.get("generation_id"),
                 "counts": imported.get("counts") or {},
+                "search": search,
                 "transaction_id": tx_id,
+                "manifest": safe_manifest_fragment(
+                    action="create",
+                    target=target_path,
+                    home=home_path,
+                    snapshot_id=snapshot_id,
+                    generation_id=imported.get("generation_id"),
+                    counts=imported.get("counts") or {},
+                    content_status="degraded-with-expected-limitations",
+                    archives=archives_meta,
+                ),
             }
 
     if phase in {"all", "promote"}:
-        promote_staging(stage_path, target_path)
-
-    search = {}
-    if phase in {"all", "verify-search"}:
-        search = verify_search(target_path, policy, allowlist_path=allow)
+        search = verify_search(stage_path, policy, allowlist_path=allow)
+        promote_staging(stage_path, target_path, home=home_path, transaction_id=transaction_id or tx_id)
 
     counts = imported.get("counts") if imported else (catalog._counts(catalog.load_items(target_path, policy)))
     generation_id = imported.get("generation_id") if imported else (catalog.read_lock(target_path) or {}).get("generation_id")

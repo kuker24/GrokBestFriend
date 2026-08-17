@@ -46,9 +46,19 @@ known snapshot (`od-packs-2026-07-20` in v1.3.1). A missing bank is
 `DEGRADED`, not an engine failure. A successful known-snapshot import
 is `SUCCESS_WITH_EXPECTED_LIMITATIONS`: integrity passes, content
 stays `DEGRADED` for unknown licenses, stubs, quarantine, and missing
-optional connectors. An existing healthy matching bank is reused. An
+optional connectors. An existing healthy matching bank is reused and
+its install manifest fragment is rewritten from the live catalog. An
 existing corrupt or different bank is not overwritten. Uninstall keeps
 `~/DesignIntelligence` as user data.
+
+The installer bootstrap phases (`stage`, `promote`, `remove-staging`,
+`recover-created`) are installer-only. Impeccable may call `plan`,
+`shortlist`, `search`, `doctor`, and selection commands; it cannot
+invoke bootstrap. Staging lives at `~/DesignIntelligence.stage.<id>`
+with a private transaction marker. Recovery of a crash reloads that
+state from the installer journal in a new process. Search verification
+runs against the staged catalog before the atomic rename. Dry-run
+never creates the target parent or a staging directory.
 
 ## Trust, license, evidence
 

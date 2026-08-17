@@ -268,6 +268,10 @@ def test_exact_fixture_and_security(tmp: Path) -> None:
         allowlist_path=ROOT / "vendor/skill-allowlist.txt",
     )
     check(again["action"] == "reuse", "reinstall reuses healthy bank")
+    check(again["manifest"].get("snapshot") == "od-test-minifixture-v1.3.1", "reuse manifest snapshot")
+    check(bool(again["manifest"].get("generationId")), "reuse manifest generation")
+    check(again["manifest"].get("items") == counts["items"], "reuse manifest counts")
+    check((again.get("search") or {}).get("negative", {}).get("results") == [], "reuse search verified")
 
     wrong = dict(counts)
     wrong["items"] = 1
@@ -356,6 +360,19 @@ def test_dry_run_and_recover(tmp: Path) -> None:
     check(not target.exists(), "dry-run did not create target")
     check(not list(home.glob("DesignIntelligence.stage.*")), "dry-run left no staging")
 
+    missing_parent = home / "nested-missing" / "DesignIntelligence"
+    dry_missing = bootstrap.bootstrap(
+        archive_dir=archive_dir,
+        target=missing_parent,
+        home=home,
+        grok_home=grok,
+        known=known,
+        dry_run=True,
+        allowlist_path=ROOT / "vendor/skill-allowlist.txt",
+    )
+    check(dry_missing["status"] == "dry-run", "dry-run with missing target parent")
+    check(not (home / "nested-missing").exists(), "dry-run did not create target parent")
+
     created = bootstrap.bootstrap(
         archive_dir=archive_dir,
         target=target,
@@ -366,8 +383,9 @@ def test_dry_run_and_recover(tmp: Path) -> None:
         allowlist_path=ROOT / "vendor/skill-allowlist.txt",
     )
     check(created["action"] == "create", "create after dry-run")
+    check((created.get("search") or {}).get("packages_loaded_during_search") == 0, "create search ran before promote")
     recovery = home / "DesignIntelligence.recovery.test"
-    moved = bootstrap.recover_created_bank(target, recovery)
+    moved = bootstrap.recover_created_bank(target, recovery, home=home)
     check(moved["action"] == "moved", "promoted bank moved to recovery")
     check(recovery.is_dir() and not target.exists(), "recovery holds the bank")
 
@@ -434,6 +452,109 @@ def test_uninstall_retains_bank(tmp: Path) -> None:
     check("retained" in proc.stdout.lower() or "user data" in proc.stdout.lower(), "uninstall reports bank retained")
 
 
+def test_destructive_paths_and_installer_gate(tmp: Path) -> None:
+    home, grok, target = isolate_home(tmp / "adv")
+    canary = tmp / "arbitrary"
+    canary.mkdir()
+    (canary / "keep").write_text("safe\n", encoding="utf-8")
+    expect_error(
+        "UNSAFE_PATH",
+        "remove-staging refuses arbitrary directory",
+        lambda: bootstrap.remove_staging(canary, home=home),
+    )
+    check((canary / "keep").read_text(encoding="utf-8") == "safe\n", "arbitrary directory remains")
+    expect_error("UNSAFE_PATH", "remove-staging refuses home", lambda: bootstrap.remove_staging(home, home=home))
+    expect_error("UNSAFE_PATH", "remove-staging refuses /", lambda: bootstrap.remove_staging(Path("/"), home=home))
+    expect_error(
+        "UNSAFE_PATH",
+        "remove-staging refuses target bank name",
+        lambda: bootstrap.remove_staging(target, home=home),
+    )
+    repoish = home / "DesignIntelligence.stage.notmarker"
+    repoish.mkdir()
+    (repoish / "keep").write_text("x\n", encoding="utf-8")
+    expect_error(
+        "UNSAFE_PATH",
+        "remove-staging refuses staging without marker",
+        lambda: bootstrap.remove_staging(repoish, home=home),
+    )
+    check((repoish / "keep").is_file(), "unmarked staging remains")
+    expect_error(
+        "UNSAFE_PATH",
+        "recover-created refuses arbitrary dest",
+        lambda: bootstrap.recover_created_bank(canary, canary / "out", home=home),
+    )
+    check((canary / "keep").is_file(), "recover did not consume canary")
+
+    env = os.environ.copy()
+    env.pop("GROK_DI_INSTALLER", None)
+    env["HOME"] = str(home)
+    valid = home / "DesignIntelligence.stage.deadbeef"
+    valid.mkdir()
+    bootstrap.write_transaction_marker(
+        valid,
+        kind=bootstrap.MARKER_KIND_STAGE,
+        transaction_id="deadbeef",
+        home=home,
+        target=target,
+    )
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/design-intelligence.py"),
+            "bootstrap",
+            "--phase",
+            "remove-staging",
+            "--staging",
+            str(valid),
+            "--home",
+            str(home),
+            "--target",
+            str(target),
+        ],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    check(proc.returncode != 0, "CLI remove-staging without installer env fails")
+    check(valid.is_dir(), "installer-gated CLI did not delete staging")
+    skill = (ROOT / "vendor/skills/impeccable/SKILL.md").read_text(encoding="utf-8")
+    check("design-intelligence.py *" not in skill, "Impeccable does not allow wildcard DI CLI")
+    check("design-intelligence.py bootstrap" not in skill, "Impeccable does not allow bootstrap CLI")
+
+
+def test_stage_runs_search(tmp: Path) -> None:
+    home, grok, target = isolate_home(tmp / "stage-search")
+    archive_dir, hashes, _ = pack_dir(tmp / "stage-search-packs")
+    policy = policy_mod.load_policy()
+    taxonomy = policy_mod.load_taxonomy()
+    staged = tmp / "stage-learn"
+    catalog.ensure_bank(staged)
+    for name in ("design-systems.zip", "design-templates.zip", "plugins.zip", "skills.zip"):
+        catalog.import_archive(staged, archive_dir / name, policy, taxonomy)
+    counts = catalog.rebuild(staged, policy, taxonomy)["counts"]
+    import shutil
+
+    shutil.rmtree(staged)
+    known = fixture_known(hashes, counts)
+    result = bootstrap.bootstrap(
+        archive_dir=archive_dir,
+        target=target,
+        home=home,
+        grok_home=grok,
+        known=known,
+        phase="stage",
+        transaction_id="stage1",
+        allowlist_path=ROOT / "vendor/skill-allowlist.txt",
+        allow_mutation=True,
+    )
+    check(result["action"] == "create", "stage created a bank")
+    check((result.get("search") or {}).get("packages_loaded_during_search") == 0, "search verified on staging")
+    check(not target.exists(), "stage did not promote")
+    check(list(home.glob("DesignIntelligence.stage.*")), "staging remains after search")
+
+
 def test_legacy_design_bank_untouched() -> None:
     text = (ROOT / "lib/design-intelligence-bank.sh").read_text(encoding="utf-8")
     check("GROK_DESIGN_BANK" not in text, "DI bank installer does not touch GROK_DESIGN_BANK")
@@ -443,6 +564,7 @@ def test_legacy_design_bank_untouched() -> None:
 
 def main() -> int:
     os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+    os.environ["GROK_DI_INSTALLER"] = "1"
     with tempfile.TemporaryDirectory() as raw:
         tmp = Path(raw)
         test_resolve_and_flags(tmp)
@@ -451,6 +573,8 @@ def main() -> int:
         test_exact_fixture_and_security(tmp)
         test_existing_and_symlink(tmp)
         test_dry_run_and_recover(tmp)
+        test_destructive_paths_and_installer_gate(tmp)
+        test_stage_runs_search(tmp)
         test_installer_cli_contract()
         test_uninstall_retains_bank(tmp)
         test_legacy_design_bank_untouched()

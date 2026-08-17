@@ -282,7 +282,10 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_p.add_argument("--claimed-snapshot")
     doctor_p.set_defaults(func=cmd_doctor)
 
-    boot_p = sub.add_parser("bootstrap", help="transactional local-pack bank import")
+    boot_p = sub.add_parser(
+        "bootstrap",
+        help="installer-only transactional local-pack bank import",
+    )
     boot_p.add_argument(
         "--phase",
         required=True,

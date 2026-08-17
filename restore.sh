@@ -4,6 +4,7 @@ umask 077
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT/lib/common.sh"
+source "$ROOT/lib/design-intelligence-bank.sh"
 source "$ROOT/lib/transaction.sh"
 
 usage() {

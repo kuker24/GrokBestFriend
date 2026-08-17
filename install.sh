@@ -116,6 +116,7 @@ case "$mode" in
     [[ -n "$stamp" ]] || stamp="$(grt_latest_backup_stamp || true)"
     [[ -n "$stamp" ]] || { grt_lock_end; grt_die "no incomplete transaction to recover"; }
     trap 'grt_lock_end' EXIT
+    grt_tx_check_stale
     grt_restore_backup "$stamp"
     grt_info "recovered managed surfaces from $stamp"
     ;;
