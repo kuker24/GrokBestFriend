@@ -188,7 +188,15 @@ def import_archive(
     dest_family = inspection.family if inspection.family in FAMILIES else None
     if dest_family is None and "UNSUPPORTED_ARCHIVE_FAMILY" not in payload["issues"]:
         payload["issues"] = list(payload["issues"]) + ["UNSUPPORTED_ARCHIVE_FAMILY"]
-    if inspection.blocked or dest_family is None:
+    owners = _logical_name_hashes(bank)
+    if (
+        dest_family is not None
+        and inspection.logical_name in owners
+        and owners[inspection.logical_name] != inspection.sha256
+    ):
+        payload["blocked"] = True
+        payload["issues"] = list(payload["issues"]) + ["DUPLICATE_LOGICAL_NAME"]
+    if inspection.blocked or dest_family is None or "DUPLICATE_LOGICAL_NAME" in payload["issues"]:
         payload["blocked"] = True
         dest = bank_dirs(bank)["quarantine"] / f"{inspection.sha256}.zip"
         shutil.copy2(archive_path, dest)
@@ -219,6 +227,30 @@ def listed_raw(bank: Path) -> list[tuple[str, Path, dict[str, Any]]]:
                 meta.update(json.loads(meta_path.read_text(encoding="utf-8")))
             found.append((family, zip_path, meta))
     return found
+
+
+def _logical_name_hashes(bank: Path) -> dict[str, str]:
+    owners: dict[str, str] = {}
+    for _family, zip_path, meta in listed_raw(bank):
+        name = str(meta.get("logical_name") or archive_mod.logical_name(zip_path))
+        digest = str(meta.get("sha256") or "")
+        if name:
+            owners[name] = digest
+    return owners
+
+
+def _duplicate_logical_names(archives_meta: list[dict[str, Any]]) -> list[str]:
+    seen: dict[str, str] = {}
+    dupes: list[str] = []
+    for row in archives_meta:
+        name = str(row.get("logical_name") or "")
+        digest = str(row.get("sha256") or "")
+        if not name:
+            continue
+        if name in seen and seen[name] != digest and name not in dupes:
+            dupes.append(name)
+        seen[name] = digest
+    return dupes
 
 
 def rebuild(
@@ -260,6 +292,14 @@ def rebuild(
                     taxonomy=taxonomy,
                 )
             )
+
+    dupes = _duplicate_logical_names(archives_meta)
+    if dupes:
+        failed = {"error": "duplicate_logical_name", "names": dupes}
+        (dirs["reports"] / "rebuild-failed.json").write_text(
+            json.dumps(failed, indent=2) + "\n", encoding="utf-8"
+        )
+        raise CatalogError("duplicate_logical_name:" + ",".join(dupes))
 
     items = apply_lineage(items, taxonomy)
     items = apply_content_duplicates(items)

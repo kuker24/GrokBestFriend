@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 _CODE_FENCE = re.compile(r"```.*?```", re.DOTALL)
@@ -11,9 +12,52 @@ _HTML = re.compile(r"<[^>]+>")
 _MD_IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
 _MD_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
-# Identity / structural values must stay byte-stable. Nested dicts still recurse.
-SKIP_VALUE_KEYS = frozenset(
+ROOT_KEYS = frozenset(
     {
+        "schema_version",
+        "id",
+        "kind",
+        "name",
+        "description",
+        "source",
+        "license",
+        "trust",
+        "evidence_tier",
+        "execution_class",
+        "style_authority",
+        "intent",
+        "modes",
+        "surfaces",
+        "platforms",
+        "categories",
+        "tags",
+        "capabilities_required",
+        "provider",
+        "search_policy",
+        "selection_policy",
+        "canonical_id",
+        "alias_of",
+        "duplicate_of",
+        "dedup_reason",
+        "untrusted_text",
+        "normalization_status",
+        "extraction_evidence",
+        "warnings",
+        "summary",
+        "search_text",
+    }
+)
+SOURCE_KEYS = frozenset({"archive", "path", "url", "version", "content_sha256"})
+LICENSE_KEYS = frozenset({"spdx", "status", "redistribution"})
+KNOWN_OBJECT_KEYS = {
+    "": ROOT_KEYS,
+    "source": SOURCE_KEYS,
+    "license": LICENSE_KEYS,
+}
+# Values at these full paths are identity/format fields, not ZIP prose.
+STRUCTURAL_VALUE_PATHS = frozenset(
+    {
+        "schema_version",
         "id",
         "kind",
         "canonical_id",
@@ -27,17 +71,27 @@ SKIP_VALUE_KEYS = frozenset(
         "search_policy",
         "selection_policy",
         "normalization_status",
-        "content_sha256",
-        "archive",
-        "path",
-        "url",
-        "version",
-        "status",
-        "redistribution",
-        "spdx",
-        "schema_version",
+        "untrusted_text",
+        "provider",
+        "source.archive",
+        "source.path",
+        "source.url",
+        "source.version",
+        "source.content_sha256",
+        "license.spdx",
+        "license.status",
+        "license.redistribution",
     }
 )
+REJECTED_KEY = "[rejected-key]"
+ID_RE = re.compile(r"^[a-z]+:[a-z0-9]+(?:-[a-z0-9]+)*$")
+ARCHIVE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,120}\.zip$", re.IGNORECASE)
+SOURCE_PATH_RE = re.compile(r"^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$")
+VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,31}$")
+URL_RE = re.compile(r"^https?://[A-Za-z0-9][A-Za-z0-9._~:/\-?#\[\]@!$&'()*+,;=%]{0,511}$")
+PROVIDER_TOKEN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+SPDX_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]{0,63}$")
+SAFE_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
 
 # Fallback only when policy has no patterns. Split so installer greps miss this file.
 _VALUE = r"""\s*[=:]\s*(?:"[^"]*"|'[^']*'|\S+)"""
@@ -161,8 +215,9 @@ def unique_keep(values: list[str], limit: int) -> list[str]:
     return out
 
 
-def _limit_for(key: str | None, policy: dict[str, Any]) -> int:
+def _limit_for(path: str, policy: dict[str, Any]) -> int:
     caps = policy.get("text") or {}
+    key = path.rsplit(".", 1)[-1] if path else ""
     if key == "name":
         return int(caps.get("name_max") or 160)
     if key == "description":
@@ -174,19 +229,86 @@ def _limit_for(key: str | None, policy: dict[str, Any]) -> int:
     return int(caps.get("field_max") or 240)
 
 
-def sanitize_tree(value: Any, policy: dict[str, Any], *, key: str | None = None) -> Any:
-    """Recursively sanitize every persisted string except structural keys."""
-    if isinstance(value, dict):
-        return {str(child_key): sanitize_tree(child, policy, key=str(child_key)) for child_key, child in value.items()}
-    if isinstance(value, list):
-        return [sanitize_tree(child, policy, key=key) for child in value]
-    if key in SKIP_VALUE_KEYS:
+def is_catalog_id(value: str | None) -> bool:
+    return bool(value and ID_RE.fullmatch(value))
+
+
+def is_archive_name(value: str | None) -> bool:
+    return bool(value and ARCHIVE_RE.fullmatch(value))
+
+
+def is_source_path(value: str | None) -> bool:
+    if not value or not SOURCE_PATH_RE.fullmatch(value):
+        return False
+    return not value.startswith("/") and ".." not in Path(value).parts
+
+
+def is_http_url(value: str | None) -> bool:
+    return bool(value and URL_RE.fullmatch(value))
+
+
+def is_version(value: str | None) -> bool:
+    return bool(value and VERSION_RE.fullmatch(value))
+
+
+def is_provider(value: str | None) -> bool:
+    return bool(value and (PROVIDER_TOKEN_RE.fullmatch(value) or is_http_url(value)))
+
+
+def is_spdx(value: str | None) -> bool:
+    return bool(value and SPDX_RE.fullmatch(value))
+
+
+def sanitize_dict_key(raw: Any, policy: dict[str, Any]) -> str:
+    text = strip_controls(str(raw))
+    text = redact_secrets(text, policy)
+    text = _strip_markers(text, list(policy.get("instruction_tells") or []))
+    text = _collapse_ws(text)
+    if not text or not SAFE_KEY_RE.fullmatch(text) or find_secret_hits(text, policy):
+        return REJECTED_KEY
+    return text
+
+
+def _sanitize_structural_value(path: str, value: Any, policy: dict[str, Any]) -> Any:
+    if value is None or isinstance(value, (bool, int, float)):
         return value
+    text = strip_controls(str(value))
+    text = redact_secrets(text, policy)
+    if path == "source.archive":
+        return Path(text).name
+    if path == "source.path":
+        return text.replace("\\", "/")
+    if path == "source.url":
+        return text if is_http_url(text) else None
+    if path == "source.version":
+        return text if is_version(text) else None
+    if path == "provider":
+        return text if is_provider(text) else None
+    if path == "license.spdx":
+        return text if is_spdx(text) else None
+    return text
+
+
+def sanitize_tree(value: Any, policy: dict[str, Any], *, path: str = "") -> Any:
+    """Recursively sanitize persisted strings and dynamic keys. Skips by full path."""
+    if isinstance(value, dict):
+        known = KNOWN_OBJECT_KEYS.get(path)
+        out: dict[str, Any] = {}
+        for child_key, child in value.items():
+            key_str = str(child_key)
+            next_key = key_str if known is not None and key_str in known else sanitize_dict_key(key_str, policy)
+            child_path = f"{path}.{next_key}" if path else next_key
+            out[next_key] = sanitize_tree(child, policy, path=child_path)
+        return out
+    if isinstance(value, list):
+        return [sanitize_tree(child, policy, path=path) for child in value]
+    if path in STRUCTURAL_VALUE_PATHS:
+        return _sanitize_structural_value(path, value, policy)
     if value is None or isinstance(value, (bool, int, float)):
         return value
     if isinstance(value, str):
-        return sanitize_field(value, policy, max_len=_limit_for(key, policy))
-    return sanitize_field(str(value), policy, max_len=_limit_for(key, policy))
+        return sanitize_field(value, policy, max_len=_limit_for(path, policy))
+    return sanitize_field(str(value), policy, max_len=_limit_for(path, policy))
 
 
 def walk_strings(value: Any) -> list[str]:
@@ -194,7 +316,8 @@ def walk_strings(value: Any) -> list[str]:
     if isinstance(value, str):
         found.append(value)
     elif isinstance(value, dict):
-        for child in value.values():
+        for child_key, child in value.items():
+            found.append(str(child_key))
             found.extend(walk_strings(child))
     elif isinstance(value, list):
         for child in value:

@@ -47,6 +47,7 @@ def main() -> int:
         check(names.get("catalog_rows") == "PASS", "fixture rows valid", failed)
         check(names.get("generation_identity") == "PASS", "generation identity valid", failed)
         check(names.get("lock_artifacts") == "PASS", "lock artifacts present", failed)
+        check(names.get("duplicate_logical_name") == "PASS", "fixture logical names unique", failed)
 
         snap = known["snapshots"][0]["archives"]
         check(policy_mod.snapshot_for_hashes(known, dict(snap)) == "od-packs-2026-07-20", "exact snapshot matches", failed)

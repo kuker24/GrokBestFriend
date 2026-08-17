@@ -87,12 +87,17 @@ and is written last. Both the JSONL and SQLite artifacts must exist
 and match the lock. Schema-invalid rows fail the rebuild. A crashed
 or invalid rebuild keeps the last healthy lock.
 
-ZIP prose is untrusted. Every persisted string is sanitized. Secret
-patterns come from policy and redact the assignment and its value.
-Future retrieval must quote stored fields as evidence, not as
-instructions. An archive whose top-level family is not systems,
-templates, plugins, or skills is quarantined as
-`UNSUPPORTED_ARCHIVE_FAMILY`.
+ZIP prose is untrusted. Every persisted string and every dynamic dict
+key is sanitized. Structural fields skip prose cleanup only by full
+path (`source.url`, `source.path`, identity ids), never by bare key
+name. Secret patterns come from policy and redact the assignment and
+its value. SPDX `known` requires an exact canonical identifier after
+explicit aliases; `MIT` and `MIT-0` are different. Two archives that
+collapse to the same logical name (`design-systems.zip` and
+`design-systems(1).zip`) fail import and rebuild. Future retrieval
+must quote stored fields as evidence, not as instructions. An archive
+whose top-level family is not systems, templates, plugins, or skills
+is quarantined as `UNSUPPORTED_ARCHIVE_FAMILY`.
 
 ## Limits
 

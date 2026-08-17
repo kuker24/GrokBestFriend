@@ -29,6 +29,9 @@ Those are derived at search/doctor time.
 - Nested vendor LICENSE files do not license the parent item.
 - Manifest license without a file is `declared-only` / `local-only`.
 - Missing is `unknown` / `local-only`.
+- Declared SPDX must equal the file match after explicit
+  `license_aliases`. Substring overlap (`MIT` vs `MIT-0`) is
+  `conflicting` / `blocked`.
 - Conflict is `conflicting` / `blocked`.
 
 Unknown or local-only items may be used as local reference. They must

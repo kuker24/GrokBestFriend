@@ -144,6 +144,63 @@ def main() -> int:
         check(list((empty / "raw" / "plugins").glob("*.zip")) == [], "unknown family not stored as plugins", failed)
         check(list((empty / "quarantine").glob("*.zip")) != [], "unknown family quarantined", failed)
 
+        from design_intelligence import archive as archive_mod
+
+        check(
+            archive_mod.logical_name(Path("design-systems(1).zip")) == "design-systems.zip",
+            "logical_name strips (1)",
+            failed,
+        )
+        dup_bank = Path(tmp) / "dup-names"
+        catalog.ensure_bank(dup_bank)
+        first_zip = write_zip(
+            Path(tmp) / "design-systems.zip",
+            {
+                "design-systems/one/manifest.json": '{"id":"one","name":"One"}',
+                "design-systems/one/DESIGN.md": "one",
+                "design-systems/one/tokens.css": ":root{}",
+            },
+        )
+        second_zip = write_zip(
+            Path(tmp) / "design-systems(1).zip",
+            {
+                "design-systems/two/manifest.json": '{"id":"two","name":"Two"}',
+                "design-systems/two/DESIGN.md": "two",
+                "design-systems/two/tokens.css": ":root{}",
+            },
+        )
+        first_imp = catalog.import_archive(dup_bank, first_zip, policy, taxonomy)
+        second_imp = catalog.import_archive(dup_bank, second_zip, policy, taxonomy)
+        check(first_imp.get("blocked") is not True, "first logical name imports", failed)
+        check(second_imp.get("blocked") is True, "second colliding logical name blocked", failed)
+        check("DUPLICATE_LOGICAL_NAME" in second_imp.get("issues", []), "duplicate logical name issue", failed)
+        check(len(list((dup_bank / "raw" / "systems").glob("*.zip"))) == 1, "only first archive stored in raw", failed)
+
+        collision = Path(tmp) / "dup-raw"
+        catalog.ensure_bank(collision)
+        one = write_zip(Path(tmp) / "one.zip", {"design-systems/a/manifest.json": '{"id":"a"}'})
+        two = write_zip(Path(tmp) / "two.zip", {"design-systems/b/manifest.json": '{"id":"b"}'})
+        import hashlib
+
+        def _store(path: Path) -> None:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            dest = collision / "raw" / "systems" / f"{digest}.zip"
+            dest.write_bytes(path.read_bytes())
+            dest.with_suffix(".meta.json").write_text(
+                json.dumps({"logical_name": "design-systems.zip", "family": "systems", "sha256": digest}),
+                encoding="utf-8",
+            )
+
+        _store(one)
+        _store(two)
+        raised_dup = False
+        try:
+            catalog.rebuild(collision, policy, taxonomy)
+        except catalog.CatalogError as exc:
+            raised_dup = "duplicate_logical_name" in str(exc)
+        check(raised_dup, "rebuild fails on colliding logical names", failed)
+        check(catalog.read_lock(collision) is None, "colliding rebuild writes no lock", failed)
+
         default_home = home / "DesignIntelligence"
         check(not default_home.exists(), "HOME DesignIntelligence not created", failed)
 

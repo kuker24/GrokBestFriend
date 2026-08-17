@@ -123,7 +123,18 @@ def doctor(
     if any(item.get("execution_class") in {"stub", "quarantined"} or (item.get("license") or {}).get("status") == "unknown" for item in items):
         add("reference_limitations", "DEGRADED", "stubs, quarantine, or unknown license present")
 
-    hashes = {row[2].get("logical_name") or row[1].name: archive_mod.sha256_file(row[1]) for row in listed_raw(bank)}
+    hashes: dict[str, str] = {}
+    dup_names: list[str] = []
+    for _family, zip_path, meta in listed_raw(bank):
+        name = str(meta.get("logical_name") or zip_path.name)
+        digest = archive_mod.sha256_file(zip_path)
+        if name in hashes and hashes[name] != digest:
+            dup_names.append(name)
+        hashes[name] = digest
+    if dup_names:
+        add("duplicate_logical_name", "BLOCKED", ",".join(dup_names[:8]))
+    else:
+        add("duplicate_logical_name", "PASS")
     lock_inputs = {str(k): str(v) for k, v in (lock.get("input_hashes") or {}).items()}
     if hashes != lock_inputs:
         add("lock_inputs", "DEGRADED", "raw archive hashes differ from lock input_hashes")

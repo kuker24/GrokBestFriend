@@ -46,4 +46,7 @@ metadata still produces a new generation.
 `catalog.lock.json` is the commit pointer and is replaced last.
 Readers require both lock artifacts, verify their hashes, and re-check
 `generation_id`. A schema-invalid item fails the rebuild and leaves
-the last healthy lock in place.
+the last healthy lock in place. `check_item` mirrors the catalog-item
+schema (types, required nested fields, string arrays,
+`additionalProperties=false`). Two raw archives that share a logical
+name after `(N)` stripping fail closed.

@@ -17,6 +17,19 @@ def _normalize_declared_spdx(declared: str | None) -> str | None:
     return None
 
 
+def canonical_spdx(value: str | None, policy: dict[str, Any]) -> str | None:
+    if not value:
+        return None
+    aliases = policy.get("license_aliases") or {}
+    if value in aliases:
+        return str(aliases[value])
+    lowered = value.lower()
+    for key, canon in aliases.items():
+        if str(key).lower() == lowered:
+            return str(canon)
+    return value
+
+
 def _signature_hits(license_text: str, spec: Any) -> bool:
     if isinstance(spec, list):
         required = spec
@@ -53,13 +66,12 @@ def detect_license(
         for spdx, spec in signatures.items():
             if _signature_hits(license_text, spec):
                 matches.append(str(spdx))
-    declared_norm = _normalize_declared_spdx(declared)
+    declared_norm = canonical_spdx(_normalize_declared_spdx(declared), policy)
     if len(matches) > 1:
         return {"spdx": matches[0], "status": "conflicting", "redistribution": "blocked"}
-    found = matches[0] if matches else None
-    if found and declared_norm and declared_norm not in {found, found.split("-")[0]}:
-        if declared_norm.lower() not in found.lower() and found.lower() not in declared_norm.lower():
-            return {"spdx": found, "status": "conflicting", "redistribution": "blocked"}
+    found = canonical_spdx(matches[0] if matches else None, policy)
+    if found and declared_norm and declared_norm != found:
+        return {"spdx": found, "status": "conflicting", "redistribution": "blocked"}
     if found:
         return {"spdx": found, "status": "known", "redistribution": "allowed"}
     if declared_norm:
