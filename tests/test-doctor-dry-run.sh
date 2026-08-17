@@ -17,6 +17,11 @@ required = [
     "vendor/rules/01-verification.md",
     "vendor/skills/impeccable/SKILL.md",
     "vendor/skills/impeccable/reference/ui-hub.md",
+    "vendor/skills/impeccable/reference/design-intelligence.md",
+    "vendor/design-intelligence/policy.json",
+    "vendor/design-intelligence/schemas/selection.schema.json",
+    "lib/design_intelligence/selection.py",
+    "scripts/design-intelligence.py",
     "vendor/skills/found-this-design/SKILL.md",
     "vendor/skills/matt-implement/SKILL.md",
     "lib/grok-chromium-cdp.sh",
@@ -84,6 +89,18 @@ else:
 if "21st.dev" in routing and "Do not register 21st.dev" not in routing:
     print("ERROR: FAIL vendor 00-routing.md enables 21st.dev")
     failed = True
+if "never a primary route or specialist" not in routing:
+    print("ERROR: FAIL vendor 00-routing.md promotes Design Intelligence")
+    failed = True
+else:
+    print("OK  vendor 00-routing.md keeps Design Intelligence internal")
+
+di = (root / "vendor/skills/impeccable/reference/design-intelligence.md").read_text(encoding="utf-8")
+if "packages_loaded_during_search=0" not in di or "no substitute specialist" not in di:
+    print("ERROR: FAIL Impeccable Design Intelligence reference misses context/fallback guard")
+    failed = True
+else:
+    print("OK  Impeccable Design Intelligence reference is bounded")
 
 if failed:
     raise SystemExit(1)

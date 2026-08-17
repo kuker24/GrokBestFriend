@@ -1,0 +1,50 @@
+{"prompt":"ubah padding tombol","intent":"refine","scope":"narrow","mode":"Operate","authority":"established","expected":{"lane":"none"}}
+{"prompt":"rapikan jarak field login","intent":"refine","scope":"narrow","mode":"Operate","authority":"established","expected":{"lane":"none"}}
+{"prompt":"perbaiki hierarchy judul artikel","intent":"refine","scope":"narrow","mode":"Read","authority":"established","expected":{"lane":"none"}}
+{"prompt":"buat CTA hero sedikit lebih jelas","intent":"refine","scope":"narrow","mode":"Persuade","authority":"established","expected":{"lane":"none"}}
+{"prompt":"benahi alignment kartu portfolio","intent":"refine","scope":"narrow","mode":"Experience","authority":"established","expected":{"lane":"none"}}
+{"prompt":"ganti label tombol checkout","intent":"refine","scope":"narrow","mode":"Operate","authority":"established","expected":{"lane":"none"}}
+{"prompt":"tingkatkan contrast badge status","intent":"refine","scope":"narrow","mode":"Operate","authority":"established","expected":{"lane":"none"}}
+{"prompt":"buat tabel lebih mudah dipindai","intent":"refine","scope":"narrow","mode":"Operate","authority":"established","expected":{"lane":"none"}}
+{"prompt":"perbaiki wrapping heading docs","intent":"refine","scope":"narrow","mode":"Read","authority":"established","expected":{"lane":"none"}}
+{"prompt":"rapikan mobile nav","intent":"refine","scope":"narrow","mode":"Persuade","authority":"partial","expected":{"lane":"none"}}
+{"prompt":"buat halaman settings baru mengikuti aplikasi","intent":"refine","scope":"surface","mode":"Operate","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"susun halaman billing dalam design system saat ini","intent":"refine","scope":"surface","mode":"Operate","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"buat halaman dokumentasi API baru dengan brand yang sama","intent":"refine","scope":"surface","mode":"Read","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"tambah pricing page dengan visual world yang sudah ada","intent":"refine","scope":"surface","mode":"Persuade","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"buat case study baru mengikuti portfolio ini","intent":"refine","scope":"surface","mode":"Experience","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"buat empty-state flow lengkap dalam app lama","intent":"refine","scope":"surface","mode":"Operate","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"susun onboarding screen tanpa mengubah style","intent":"refine","scope":"surface","mode":"Operate","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"buat changelog page dalam sistem existing","intent":"refine","scope":"surface","mode":"Read","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"buat landing page AI yang berbeda dari SaaS biasa","intent":"greenfield","scope":"world","mode":"Persuade","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"buat dashboard trading baru","intent":"greenfield","scope":"world","mode":"Operate","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"buat portal internal untuk operasi gudang","intent":"greenfield","scope":"world","mode":"Operate","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"buat situs editorial untuk jurnal riset","intent":"greenfield","scope":"world","mode":"Read","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"buat portfolio immersive untuk studio arsitektur","intent":"greenfield","scope":"world","mode":"Experience","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"redesign total dashboard developer","intent":"redesign","scope":"world","mode":"Operate","authority":"established","expected":{"lane":"system+structure"}}
+{"prompt":"ganti total visual world pricing page","intent":"redesign","scope":"world","mode":"Persuade","authority":"established","expected":{"lane":"system+structure"}}
+{"prompt":"buat seperti Linear tetapi bukan salinan","intent":"redesign","scope":"world","mode":"Operate","authority":"partial","reference":"named","expected":{"lane":"system+structure"}}
+{"prompt":"arah visual baru untuk knowledge base","intent":"redesign","scope":"world","mode":"Read","authority":"partial","expected":{"lane":"system+structure"}}
+{"prompt":"brand belum lengkap, buat halaman kampanye","intent":"greenfield","scope":"surface","mode":"Persuade","authority":"partial","expected":{"lane":"system+structure"}}
+{"prompt":"app baru dengan brief ops console yang jelas","intent":"greenfield","scope":"surface","mode":"Operate","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"website baru untuk dokumentasi bahasa pemrograman","intent":"greenfield","scope":"surface","mode":"Read","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"gallery baru tanpa visual authority","intent":"greenfield","scope":"surface","mode":"Experience","authority":"none","expected":{"lane":"system+structure"}}
+{"prompt":"redesign halaman checkout meski brand lama ada","intent":"redesign","scope":"surface","mode":"Operate","authority":"established","expected":{"lane":"system+structure"}}
+{"prompt":"buat microsite baru dengan referensi Raycast","intent":"greenfield","scope":"world","mode":"Persuade","authority":"none","reference":"named","expected":{"lane":"system+structure"}}
+{"prompt":"buat dashboard berdasarkan screenshot ini","intent":"redesign","scope":"world","mode":"Operate","authority":"established","reference":"screenshot","expected":{"lane":"none","handoff":"found-this-design"}}
+{"prompt":"gunakan URL referensi ini untuk landing page","intent":"greenfield","scope":"world","mode":"Persuade","authority":"none","reference":"url","expected":{"lane":"none","handoff":"found-this-design"}}
+{"prompt":"adaptasi screenshot portfolio yang saya kirim","intent":"redesign","scope":"world","mode":"Experience","authority":"partial","reference":"screenshot","expected":{"lane":"none","handoff":"found-this-design"}}
+{"prompt":"audit URL docs lalu buat ulang desainnya","intent":"redesign","scope":"world","mode":"Read","authority":"established","reference":"url","expected":{"lane":"none","handoff":"found-this-design"}}
+{"prompt":"ikuti screenshot untuk halaman settings","intent":"refine","scope":"surface","mode":"Operate","authority":"established","reference":"screenshot","expected":{"lane":"none","handoff":"found-this-design"}}
+{"prompt":"jadikan URL brand ini dasar kampanye","intent":"greenfield","scope":"surface","mode":"Persuade","authority":"partial","reference":"url","expected":{"lane":"none","handoff":"found-this-design"}}
+{"prompt":"buat animasinya lebih smooth","intent":"refine","scope":"narrow","mode":"Operate","authority":"established","task_kind":"motion","expected":{"lane":"none"}}
+{"prompt":"audit motion halaman ini","intent":"refine","scope":"surface","mode":"Persuade","authority":"established","task_kind":"motion","expected":{"lane":"none"}}
+{"prompt":"buat Sankey chart","intent":"greenfield","scope":"surface","mode":"Operate","authority":"established","task_kind":"data","expected":{"lane":"none"}}
+{"prompt":"tambahkan network graph ke dashboard","intent":"refine","scope":"surface","mode":"Operate","authority":"established","task_kind":"data","expected":{"lane":"none"}}
+{"prompt":"buat pengalaman 3D scroll world","intent":"greenfield","scope":"world","mode":"Experience","authority":"none","task_kind":"three-d","expected":{"lane":"none"}}
+{"prompt":"buat custom WebGL shader","intent":"greenfield","scope":"surface","mode":"Experience","authority":"none","task_kind":"three-d","expected":{"lane":"none"}}
+{"prompt":"haluskan transition antar route","intent":"refine","scope":"narrow","mode":"Operate","authority":"established","task_kind":"motion","expected":{"lane":"none"}}
+{"prompt":"buat sunburst interaktif","intent":"greenfield","scope":"surface","mode":"Operate","authority":"partial","task_kind":"data","expected":{"lane":"none"}}
+{"prompt":"buat hero 3D untuk campaign","intent":"greenfield","scope":"world","mode":"Persuade","authority":"none","task_kind":"three-d","expected":{"lane":"none"}}
+{"prompt":"restrukturisasi seluruh app tetapi pertahankan visual identity","intent":"refine","scope":"world","mode":"Operate","authority":"established","expected":{"lane":"structure"}}
+{"prompt":"susun ulang semua docs tanpa mengganti design system","intent":"refine","scope":"world","mode":"Read","authority":"established","expected":{"lane":"structure"}}

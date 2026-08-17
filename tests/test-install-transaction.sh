@@ -70,6 +70,26 @@ grt_atomic_swap
 [[ -f "$GRT_HOOKS/personal.json" ]] || fail "foreign hook was deleted"
 [[ -f "$GRT_SKILLS/impeccable/SKILL.md" ]] || fail "owned impeccable missing"
 [[ -f "$GRT_SKILLS/impeccable/.grokbestfriend-owned.json" ]] || fail "missing skill ownership marker"
+[[ -x "$GRT_SKILLS/impeccable/scripts/design-intelligence.py" ]] || fail "packaged design-intelligence CLI missing"
+[[ -f "$GRT_SKILLS/impeccable/scripts/design_intelligence/selection.py" ]] || fail "packaged design-intelligence runtime missing"
+[[ -f "$GRT_SKILLS/impeccable/design-intelligence/policy.json" ]] || fail "packaged design-intelligence policy missing"
+PYTHONDONTWRITEBYTECODE=1 python3 "$GRT_SKILLS/impeccable/scripts/design-intelligence.py" plan \
+  --intent refine --scope narrow --mode Operate --authority established >"$tmp/plan.json"
+grep -q '"lane": "none"' "$tmp/plan.json" || fail "packaged design-intelligence CLI does not run"
+python3 - "$ROOT" "$tmp/di-bank" <<'PY'
+import sys
+from pathlib import Path
+root, bank = map(Path, sys.argv[1:3])
+sys.path.insert(0, str(root / "lib"))
+sys.path.insert(0, str(root / "tests"))
+from design_intelligence_support import seed_bank
+seed_bank(bank)
+PY
+PYTHONDONTWRITEBYTECODE=1 python3 "$GRT_SKILLS/impeccable/scripts/design-intelligence.py" shortlist \
+  --bank "$tmp/di-bank" --intent greenfield --mode Operate \
+  --query "acme dashboard sidebar kpi" >"$tmp/shortlist.json"
+grep -q '"packages_loaded_during_search": 0' "$tmp/shortlist.json" || fail "packaged shortlist opened packages"
+grep -q '"id": "system:acme"' "$tmp/shortlist.json" || fail "packaged shortlist cannot load policy/catalog"
 [[ -f "$GRT_RULES/.grokbestfriend-owned.json" ]] || fail "missing rules ownership marker"
 grep -q 'at most one verification specialist' "$GRT_RULES/00-routing.md" || fail "owned rule not replaced"
 [[ -f "$GRT_SKILLS/ask-matt/SKILL.md" ]] || fail "ask-matt missing"

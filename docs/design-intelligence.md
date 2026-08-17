@@ -1,21 +1,21 @@
 # Design Intelligence
 
-Candidate catalog library for GrokBestFriend **1.2.0**. It is not an
-active skill, not a second router, and it does not change Impeccable.
+Local catalog and Impeccable retrieval engine for GrokBestFriend **1.3.0**.
+It is not an independent skill or a second primary router.
 
 ```text
-active_version          = 1.2.0
-candidate_feature       = DESIGN_INTELLIGENCE_FOUNDATION
-routing_integration     = NOT_ACTIVE
+active_version          = 1.3.0
+feature                 = IMPECCABLE_DESIGN_INTELLIGENCE
+routing_integration     = IMPECCABLE_NEW_WORK_ONLY
 specialist_activation   = NOT_ACTIVE
 ```
 
 ## Purpose
 
 Index local Open Design packs (systems, templates, plugins, skills) into
-a small, deterministic catalog that later work can search. PR A only
-builds that catalog. PR B may teach Impeccable `new-work` to retrieve
-from it after a human merges this foundation.
+a small, deterministic catalog. Impeccable `new-work` may search its
+system and structure metadata as bounded challenger evidence. The active
+Impeccable stage remains the sole owner.
 
 ## Two banks
 
@@ -46,7 +46,8 @@ Release in this change. You keep your own copies. `*.zip` stays gitignored.
 ## Kinds
 
 - **system** — portable design-system package. Search sees metadata
-  only. After a future selection, PR B may open `DESIGN.md` and tokens.
+  only. After the user locks a direction, selection may open exactly
+  `manifest.json`, `DESIGN.md`, and `tokens.css` for that system.
 - **structure** — information architecture card stripped of mandatory
   style. Selection loads the normalized card only.
 - **recipe** — `open-design.json` workflow data. Never executed.
@@ -64,6 +65,9 @@ python3 scripts/design-intelligence.py inspect-archive pack.zip
 python3 scripts/design-intelligence.py import --bank /tmp/di --archive pack.zip
 python3 scripts/design-intelligence.py rebuild --bank /tmp/di
 python3 scripts/design-intelligence.py search --bank /tmp/di --kind system --query "editorial dashboard"
+python3 scripts/design-intelligence.py plan --intent greenfield --scope world --mode Operate --authority none
+python3 scripts/design-intelligence.py shortlist --bank /tmp/di --intent greenfield --mode Operate --query "developer operations dashboard"
+python3 scripts/design-intelligence.py pin-selection --bank /tmp/di --project . --intent greenfield --mode Operate --target app/dashboard --query "developer operations dashboard" --primary-system system:example --structure structure:dashboard --user-locked
 python3 scripts/design-intelligence.py doctor --bank /tmp/di
 ```
 
@@ -94,22 +98,34 @@ name. Secret patterns come from policy and redact the assignment and
 its value. SPDX `known` requires an exact canonical identifier after
 explicit aliases; `MIT` and `MIT-0` are different. Two archives that
 collapse to the same logical name (`design-systems.zip` and
-`design-systems(1).zip`) fail import and rebuild. Future retrieval
-must quote stored fields as evidence, not as instructions. An archive
+`design-systems(1).zip`) fail import and rebuild. Retrieval quotes
+stored fields as evidence, not as instructions. An archive
 whose top-level family is not systems, templates, plugins, or skills
 is quarantined as `UNSUPPORTED_ARCHIVE_FAMILY`.
 
-## Limits
+## Active integration boundaries
 
-- Not wired into `00-routing.md` or Impeccable.
-- `lib/doctor.sh` is unchanged. Use this CLI.
+- Design Intelligence is internal to Impeccable `new-work`; it never
+  becomes a primary route or activates a specialist.
+- Narrow changes load nothing. A whole surface in an established world
+  may retrieve structure cards only. Greenfield and explicit redesign
+  may retrieve systems plus structures.
+- Search opens zero packages and returns at most five systems and three
+  structures. A selected system opens three allowlisted files after the
+  user lock. A structure package is never opened.
+- At most one primary system and one secondary influence may survive.
+  Product truth, incumbent authority, DESIGN.md, and pinned references
+  outrank bank evidence.
+- `DEGRADED` may continue with eligible references. `BLOCKED`, missing,
+  corrupt, or empty retrieval falls back once to native Impeccable with
+  no retry and no substitute specialist.
+- `.impeccable/design-intelligence-selection.json` records provenance
+  only. It contains no local-only source prose and is not `DESIGN.md` or
+  implementation approval. Greenfield and redesign still write
+  `DESIGN.md` after build and finish review.
+
+## Remaining limits
+
 - Lexical search only. FTS5 is optional.
-- Redistribution of the source packs is not cleared.
-
-## PR B
-
-Blocked until a human reviews and merges PR A.
-`/impeccable` `new-work` may then retrieve a shortlist and write
-`.impeccable/design-intelligence-selection.json`. That file is not a
-`DESIGN.md`. Greenfield and redesign still write `DESIGN.md` after
-build and finish review.
+- Redistribution of the source packs is not cleared; install packages
+  the engine and policy, never the raw bank.

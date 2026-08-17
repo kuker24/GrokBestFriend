@@ -7,7 +7,19 @@ import re
 from pathlib import Path
 from typing import Any
 
-VENDOR_DIR = Path(__file__).resolve().parents[2] / "vendor" / "design-intelligence"
+def _vendor_dir() -> Path:
+    """Resolve policy assets in the source tree or packaged Impeccable skill."""
+    here = Path(__file__).resolve()
+    source = here.parents[2] / "vendor" / "design-intelligence"
+    if source.is_dir():
+        return source
+    packaged = here.parents[2] / "design-intelligence"
+    if packaged.is_dir():
+        return packaged
+    return source
+
+
+VENDOR_DIR = _vendor_dir()
 
 
 class PolicyError(ValueError):

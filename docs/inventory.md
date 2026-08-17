@@ -1,6 +1,6 @@
-# Live inventory (2026-08-16)
+# Live inventory (2026-08-17)
 
-Product identity: **GrokBestFriend 1.2.0**. Captured from the source Linux host. See `vendor/inventory.json` for the machine-readable copy. Install preserves foreign skills/rules/hooks, journals a crash-safe transaction, and enforces `vendor/runtime-policy.json` (`yolo=false`, `permission_mode=ask`, compat off). v1.2.0 adds the pinned shadcn MCP as the UI registry hub.
+Product identity: **GrokBestFriend 1.3.0**. Captured from the source Linux host. See `vendor/inventory.json` for the machine-readable copy. Install preserves foreign skills/rules/hooks, journals a crash-safe transaction, and enforces `vendor/runtime-policy.json` (`yolo=false`, `permission_mode=ask`, compat off). v1.2.0 added the pinned shadcn MCP as the UI registry hub; v1.3.0 packages the local Design Intelligence runtime inside Impeccable and activates only its bounded `new-work` retrieval lane.
 
 Planning skills `ask-matt` `grill-with-docs` `to-spec` `to-tickets` are model-invocable. Bundled `/implement` stays slash-only. Routing allows one primary specialist plus at most one verification specialist when a risk or measured-performance trigger is on.
 

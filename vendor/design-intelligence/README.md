@@ -1,7 +1,7 @@
-# Design Intelligence (catalog foundation)
+# Design Intelligence
 
-Candidate library for GrokBestFriend 1.2.0. **Not an active router.**
-`VERSION` stays 1.2.0. Impeccable and `00-routing.md` are unchanged.
+Local reference engine for GrokBestFriend 1.3.0. **Not an independent
+router or skill.** Impeccable `new-work` owns its bounded retrieval stage.
 
 This tree is policy, taxonomy, and schemas. The indexer lives in
 `lib/design_intelligence/` and the CLI is `scripts/design-intelligence.py`.
@@ -33,6 +33,8 @@ python3 scripts/design-intelligence.py inspect-archive pack.zip
 python3 scripts/design-intelligence.py import --bank /tmp/di --archive pack.zip
 python3 scripts/design-intelligence.py rebuild --bank /tmp/di
 python3 scripts/design-intelligence.py search --bank /tmp/di --kind system --query "editorial dashboard"
+python3 scripts/design-intelligence.py plan --intent greenfield --scope world --mode Operate --authority none
+python3 scripts/design-intelligence.py shortlist --bank /tmp/di --intent greenfield --mode Operate --query "developer dashboard"
 python3 scripts/design-intelligence.py doctor --bank /tmp/di
 ```
 

@@ -35,6 +35,7 @@ Follow this tree here. Do not load `/ask-matt` unless the user is choosing a wor
 
 - Matching or choosing a visual direction from the local design bank (Refero / Motionsites), including 3–5 recommendations and high-fidelity first-viewport previews: `/found-this-design` first. Then `/impeccable` after a pick.
 - Visual UI once a world is chosen or the brief is already visual: `/impeccable` first.
+- Design Intelligence is an internal, lazy retrieval stage of Impeccable `new-work`, never a primary route or specialist. Narrow refinement does not use it; an established whole surface may retrieve structure only; greenfield or explicit redesign may retrieve bounded system + structure challengers. URL/screenshot reference still routes through `/found-this-design` first. One stage owner remains active.
 - Installable UI components (form, table, chart, icon, hero, marquee, gantt, animated primitive): MCP `shadcn` only. Load Impeccable `reference/ui-hub.md`. Search → inspect 1–3 candidates → pick one → install. Do not add Magic UI, Kibo, 21st.dev, or community UI MCP servers.
 - Decorative components only when they clarify hierarchy, interaction, brand, or data. One authored landing moment. Dashboards may be denser (charts, table, KPI, status) but stay in one system.
 - Use the hub only when cwd has `components.json`. React + Tailwind without init: offer `npx shadcn@<pinned> init`, never silent. Never init this GrokBestFriend repo, a backend or Python tree, or a non-UI cwd.

@@ -68,5 +68,7 @@ jobs:
           python3 tests/test-design-intelligence-classify.py
           python3 tests/test-design-intelligence-search.py
           python3 tests/test-design-intelligence-authority.py
+          python3 tests/test-design-intelligence-integration.py
+          python3 tests/test-design-intelligence-selection.py
           python3 tests/test-design-intelligence-doctor.py
           python3 tests/test-design-intelligence-optional-audit.py

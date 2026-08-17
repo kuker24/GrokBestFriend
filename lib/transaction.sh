@@ -39,17 +39,27 @@ grt_preflight() {
   [[ -f "$GRT_VENDOR/mcp-policy.json" ]] || grt_die "missing $GRT_VENDOR/mcp-policy.json"
   [[ -f "$GRT_VENDOR/sources.json" ]] || grt_die "missing $GRT_VENDOR/sources.json"
   [[ -f "$GRT_VENDOR/runtime-policy.json" ]] || grt_die "missing $GRT_VENDOR/runtime-policy.json"
+  [[ -d "$GRT_VENDOR/design-intelligence" ]] || grt_die "missing $GRT_VENDOR/design-intelligence"
+  [[ -d "$GRT_ROOT/lib/design_intelligence" ]] || grt_die "missing $GRT_ROOT/lib/design_intelligence"
+  [[ -f "$GRT_ROOT/scripts/design-intelligence.py" ]] || grt_die "missing design-intelligence CLI"
   python3 - "$GRT_VENDOR/sources.json" "$GRT_VENDOR/mcp-policy.json" "$GRT_VENDOR/runtime-policy.json" <<'PY' || grt_die "vendor JSON failed to parse"
 import json, sys
 from pathlib import Path
 for path in sys.argv[1:]:
     json.loads(Path(path).read_text(encoding="utf-8"))
 PY
+  python3 - "$GRT_VENDOR/design-intelligence" <<'PY' || grt_die "Design Intelligence policy/schema JSON failed to parse"
+import json, sys
+from pathlib import Path
+for path in sorted(Path(sys.argv[1]).rglob("*.json")):
+    json.loads(path.read_text(encoding="utf-8"))
+PY
   grt_load_skill_allowlist
   local name
   for name in "${GRT_SKILLS_VENDOR[@]}"; do
     [[ -d "$GRT_VENDOR/skills/$name" ]] || grt_die "Missing vendor skill: $name"
   done
+
   grt_require_node
 }
 
@@ -604,6 +614,19 @@ write_skill_marker(Path(sys.argv[2]), sys.argv[3], sys.argv[4])
 PY
   done
 
+  # Design Intelligence is an internal Impeccable reference engine, not a
+  # separately routable skill. Package its stdlib-only runtime atomically with
+  # the owning skill so install/restore cannot split their versions.
+  dest="$stage/skills/impeccable"
+  mkdir -p -- "$dest/scripts"
+  cp -a -- "$GRT_ROOT/lib/design_intelligence" "$dest/scripts/design_intelligence"
+  find "$dest/scripts/design_intelligence" -type d -name __pycache__ -prune -exec rm -rf -- {} +
+  find "$dest/scripts/design_intelligence" -type f -name '*.pyc' -delete
+  cp -a -- "$GRT_ROOT/scripts/design-intelligence.py" "$dest/scripts/design-intelligence.py"
+  chmod 755 -- "$dest/scripts/design-intelligence.py"
+  cp -a -- "$GRT_VENDOR/design-intelligence" "$dest/design-intelligence"
+  cp -a -- "$GRT_VENDOR/skill-allowlist.txt" "$dest/design-intelligence/skill-allowlist.txt"
+
   # Only remove implement/code-review from the staged tree when they are GBF-owned.
   for name in implement code-review; do
     if [[ -e "$stage/skills/$name" ]]; then
@@ -642,6 +665,21 @@ grt_validate_stage() {
   fi
   python3 "$GRT_ROOT/lib/validate_skills.py" --skills "$stage/skills" --routing "$stage/rules/00-routing.md" \
     || grt_die "staged skills failed validation"
+  [[ -f "$stage/skills/impeccable/scripts/design-intelligence.py" ]] \
+    || grt_die "staged Impeccable is missing Design Intelligence CLI"
+  [[ -f "$stage/skills/impeccable/scripts/design_intelligence/selection.py" ]] \
+    || grt_die "staged Impeccable is missing Design Intelligence runtime"
+  [[ -f "$stage/skills/impeccable/design-intelligence/policy.json" ]] \
+    || grt_die "staged Impeccable is missing Design Intelligence policy"
+  python3 - "$stage/skills/impeccable/design-intelligence" <<'PY' \
+    || grt_die "staged Design Intelligence policy/schema JSON failed to parse"
+import json, sys
+from pathlib import Path
+for path in sorted(Path(sys.argv[1]).rglob("*.json")):
+    json.loads(path.read_text(encoding="utf-8"))
+PY
+  PYTHONDONTWRITEBYTECODE=1 python3 "$stage/skills/impeccable/scripts/design-intelligence.py" --help >/dev/null \
+    || grt_die "staged Design Intelligence CLI failed to load"
 }
 
 grt_atomic_swap() {

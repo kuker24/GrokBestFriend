@@ -12,7 +12,7 @@ between laptops for the same inputs.
 | `connector-required` | Needs `od`, Open Design `agent-browser`, Figma, or similar |
 | `provider-required` | Needs a named hosted API |
 | `quarantined` | Community, unsafe, or untrusted executable claim |
-| `native-candidate` / `adapted-candidate` | Reserved; PR A does not emit these from ZIP rows |
+| `native-candidate` / `adapted-candidate` | Reserved; catalog import does not emit these from ZIP rows |
 
 Do not store `execution_status`, `runtime_availability`, or `available_via`.
 Those are derived at search/doctor time.
